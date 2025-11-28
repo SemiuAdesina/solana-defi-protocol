@@ -1,0 +1,17 @@
+node_modules
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env
+dist
+.next
+coverage
+pnpm-lock.yaml
+backend/dist
+frontend/.next
+frontend/out
+**/target
+**/.anchor
+Dockerfile.lock
+
