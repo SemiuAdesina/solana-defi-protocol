@@ -4,14 +4,7 @@ import { createResolvers, type GraphContext } from "./resolvers.js";
 
 const resolvers = createResolvers();
 
-const createContext = (): {
-  ctx: GraphContext;
-  mocks: {
-    getRegistryByAuthority: ReturnType<typeof vi.fn>;
-    getRecent: ReturnType<typeof vi.fn>;
-    getStatus: ReturnType<typeof vi.fn>;
-  };
-} => {
+const createContext = () => {
   const getRegistryByAuthority = vi.fn();
   const getRecent = vi.fn();
   const getStatus = vi.fn();
@@ -29,7 +22,11 @@ const createContext = (): {
 
   return {
     ctx,
-    mocks: { getRegistryByAuthority, getRecent, getStatus }
+    mocks: {
+      getRegistryByAuthority: getRegistryByAuthority as ReturnType<typeof vi.fn>,
+      getRecent: getRecent as ReturnType<typeof vi.fn>,
+      getStatus: getStatus as ReturnType<typeof vi.fn>
+    }
   };
 };
 
