@@ -274,7 +274,6 @@ export const WalletSection = ({ onAuthorityChange }: WalletSectionProps) => {
 
                 {/* Menu Items */}
                 <button
-                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
                   onClick={() => {
                     void handleCopy();
                   }}
@@ -341,7 +340,6 @@ export const WalletSection = ({ onAuthorityChange }: WalletSectionProps) => {
                 </button>
 
                 <button
-                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
                   onClick={() => {
                     void handleDisconnect();
                   }}

@@ -99,6 +99,7 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
       });
       setConfirmAction(() => () => {
         setShowConfirmModal(false);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         proceedWithInitialize();
       });
       setShowConfirmModal(true);
@@ -380,6 +381,7 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
       });
       setConfirmAction(() => () => {
         setShowConfirmModal(false);
+        // eslint-disable-next-line @typescript-eslint/no-floating-promises
         proceedWithUpdate();
       });
       setShowConfirmModal(true);
@@ -858,7 +860,6 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
               </div>
               <div style={{ display: 'flex', gap: '8px' }}>
                 <button
-                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
                   onClick={() => {
                     void handleUpdateMetadata();
                   }}
@@ -932,7 +933,6 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
               </p>
               {publicKey && (authority === publicKey.toBase58() || !authority) && (
                 <button
-                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
                   onClick={() => {
                     void handleInitializeRegistry();
                   }}
