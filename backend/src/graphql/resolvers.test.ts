@@ -4,19 +4,17 @@ import { createResolvers, type GraphContext } from "./resolvers.js";
 
 const resolvers = createResolvers();
 
-const createContext = () => {
-  const getRegistryByAuthority = vi.fn<
-    Parameters<GraphContext["registryService"]["getRegistryByAuthority"]>,
-    ReturnType<GraphContext["registryService"]["getRegistryByAuthority"]>
-  >();
-  const getRecent = vi.fn<
-    Parameters<GraphContext["ciStatusService"]["getRecent"]>,
-    ReturnType<GraphContext["ciStatusService"]["getRecent"]>
-  >();
-  const getStatus = vi.fn<
-    Parameters<GraphContext["ciStatusService"]["getStatus"]>,
-    ReturnType<GraphContext["ciStatusService"]["getStatus"]>
-  >();
+const createContext = (): {
+  ctx: GraphContext;
+  mocks: {
+    getRegistryByAuthority: ReturnType<typeof vi.fn>;
+    getRecent: ReturnType<typeof vi.fn>;
+    getStatus: ReturnType<typeof vi.fn>;
+  };
+} => {
+  const getRegistryByAuthority = vi.fn();
+  const getRecent = vi.fn();
+  const getStatus = vi.fn();
 
   const ctx: GraphContext = {
     registryService: {
