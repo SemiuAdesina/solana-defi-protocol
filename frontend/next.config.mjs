@@ -6,7 +6,8 @@ const config = {
     instrumentationHook: true
   },
   eslint: {
-    ignoreDuringBuilds: false
+    ignoreDuringBuilds: false,
+    dirs: ["app", "components", "lib"]
   },
   typescript: {
     ignoreBuildErrors: false

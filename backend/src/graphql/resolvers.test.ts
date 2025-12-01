@@ -4,7 +4,14 @@ import { createResolvers, type GraphContext } from "./resolvers.js";
 
 const resolvers = createResolvers();
 
-const createContext = () => {
+const createContext = (): {
+  ctx: GraphContext;
+  mocks: {
+    getRegistryByAuthority: ReturnType<typeof vi.fn>;
+    getRecent: ReturnType<typeof vi.fn>;
+    getStatus: ReturnType<typeof vi.fn>;
+  };
+} => {
   const getRegistryByAuthority = vi.fn();
   const getRecent = vi.fn();
   const getStatus = vi.fn();

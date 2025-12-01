@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
 import "graphiql/graphiql.css";
-import type { Fetcher, FetcherParams, FetcherResult } from "@graphiql/toolkit";
 import type { GraphiQLProps } from "graphiql";
 import { useMediaQuery } from "../lib/useMediaQuery";
 import { FaPlay } from "react-icons/fa";
@@ -21,7 +20,7 @@ const defaultQuery = `query GetCiStatuses {
   }
 }`;
 
-const fetcher: Fetcher = async (params: FetcherParams) => {
+const fetcher = async (params: any): Promise<any> => {
   try {
     const res = await fetch("/graphql", {
       method: "POST",
@@ -33,9 +32,7 @@ const fetcher: Fetcher = async (params: FetcherParams) => {
       throw new Error(`HTTP error! status: ${res.status}`);
     }
     
-    const raw = (await res.json()) as unknown;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-    return raw as FetcherResult;
+    return await res.json();
   } catch (error) {
     console.error("GraphQL fetch error:", error);
     throw error;
