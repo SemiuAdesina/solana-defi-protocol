@@ -20,18 +20,23 @@ export const createMetadataRouter = (registryService: RegistryService): Router =
       return;
     }
 
-    const registry = await registryService.getRegistryByAuthority(parseResult.data.authority);
-    if (!registry) {
-      res.status(404).json({ error: "RegistryNotFound" });
-      return;
-    }
+    try {
+      const registry = await registryService.getRegistryByAuthority(parseResult.data.authority);
+      if (!registry) {
+        res.status(404).json({ error: "RegistryNotFound" });
+        return;
+      }
 
-    res.json({
-      authority: registry.authority,
-      metadataUri: registry.metadataUri ?? null,
-      metadataChecksum: registry.metadataChecksum ?? null,
-      version: registry.version
-    });
+      res.json({
+        authority: registry.authority,
+        metadataUri: registry.metadataUri ?? null,
+        metadataChecksum: registry.metadataChecksum ?? null,
+        version: registry.version
+      });
+    } catch (error) {
+      console.error("metadata lookup failure", error);
+      res.status(500).json({ error: "MetadataLookupFailed" });
+    }
   };
 
   router.get("/:authority", (req, res) => {

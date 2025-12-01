@@ -1,3 +1,12 @@
 {
-  "statuses": []
+  "statuses": [
+    {
+      "pipeline": "test-pipeline",
+      "status": "success",
+      "commit": "test123",
+      "runId": "test-run-001",
+      "triggeredBy": "manual-test",
+      "timestamp": "2025-11-30T07:43:34.049Z"
+    }
+  ]
 }

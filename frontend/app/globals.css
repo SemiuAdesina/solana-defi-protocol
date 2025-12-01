@@ -72,3 +72,210 @@ main {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.5);
 }
+
+/* Mobile Responsive Styles */
+@media (max-width: 768px) {
+  /* Header adjustments */
+  header {
+    padding: 0 12px !important;
+  }
+  
+  header > div > div {
+    height: 64px !important;
+  }
+  
+  header h2 {
+    font-size: 16px !important;
+  }
+  
+  header p {
+    font-size: 10px !important;
+  }
+  
+  /* Hero section - target by structure */
+  body > div > div > div:first-of-type > section:first-of-type {
+    padding-top: 80px !important;
+    padding-bottom: 48px !important;
+  }
+  
+  h1 {
+    font-size: 32px !important;
+  }
+  
+  /* Grid layouts - stack on mobile */
+  main > div[style*="display: 'grid'"],
+  main > div[style*="display:grid"] {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  /* Main content padding */
+  main {
+    padding: 0 12px 32px !important;
+    gap: 32px !important;
+  }
+  
+  /* Card sections - reduce padding */
+  main > div > div > section,
+  main section {
+    padding: 16px !important;
+  }
+  
+  /* Warning banner container */
+  body > div > div > div:first-of-type > div[style*="maxWidth: '1280px'"] {
+    margin: 24px auto 0 !important;
+    padding: 0 12px !important;
+  }
+  
+  /* Warning banner content - target nested divs */
+  body > div > div > div:first-of-type > div > div {
+    padding: 16px !important;
+    gap: 12px !important;
+  }
+  
+  body > div > div > div:first-of-type > div > div h3 {
+    font-size: 14px !important;
+    margin-bottom: 6px !important;
+  }
+  
+  body > div > div > div:first-of-type > div > div p {
+    font-size: 13px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  body > div > div > div:first-of-type > div > div ol {
+    font-size: 12px !important;
+    margin-left: 16px !important;
+    margin-bottom: 10px !important;
+  }
+  
+  body > div > div > div:first-of-type > div > div ul {
+    margin-left: 12px !important;
+    margin-top: 4px !important;
+  }
+  
+  body > div > div > div:first-of-type > div > div code {
+    font-size: 10px !important;
+    padding: 2px 4px !important;
+    word-break: break-all !important;
+    display: block !important;
+    margin-top: 4px !important;
+  }
+  
+  /* Font sizes in sections */
+  section p {
+    font-size: 14px !important;
+  }
+  
+  section h3 {
+    font-size: 14px !important;
+  }
+  
+  /* Icon sizes - general rules */
+  section svg {
+    max-width: 100% !important;
+    height: auto !important;
+  }
+  
+  /* Button sizes */
+  section button {
+    font-size: 13px !important;
+    padding: 10px 16px !important;
+  }
+  
+  /* Authority display - allow full width on mobile */
+  p {
+    max-width: 100% !important;
+    word-break: break-word !important;
+  }
+  
+  /* Input fields */
+  input[type="text"] {
+    font-size: 14px !important;
+    padding: 10px 12px !important;
+  }
+  
+  /* Code blocks */
+  code {
+    font-size: 11px !important;
+    padding: 2px 4px !important;
+    word-break: break-all !important;
+  }
+  
+  /* Dropdown positioning */
+  div[style*="minWidth"] {
+    right: 0 !important;
+    left: auto !important;
+    min-width: 160px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra small screens */
+  header > div > div {
+    height: 56px !important;
+  }
+  
+  body > div > div > div:first-of-type > section:first-of-type > div {
+    padding: 0 8px !important;
+  }
+  
+  section h1 {
+    font-size: 24px !important;
+  }
+  
+  main {
+    padding: 0 8px 24px !important;
+    gap: 24px !important;
+  }
+  
+  main > div > div > section,
+  main section {
+    padding: 12px !important;
+  }
+  
+  body > div > div > div:first-of-type > div > div {
+    padding: 12px !important;
+  }
+  
+  /* Hide testnet badge on very small screens */
+  .hidden-mobile {
+    display: none !important;
+  }
+  
+  header h2 {
+    font-size: 14px !important;
+  }
+  
+  header p {
+    font-size: 9px !important;
+  }
+  
+  /* Smaller icons on very small screens */
+  section svg {
+    max-width: 80% !important;
+  }
+  
+  /* Compact buttons */
+  button {
+    padding: 8px 12px !important;
+    font-size: 12px !important;
+  }
+  
+  /* Smaller text */
+  p {
+    font-size: 13px !important;
+  }
+  
+  /* Tighter spacing */
+  main > div[style*="display: 'grid'"],
+  main > div[style*="display:grid"] {
+    gap: 12px !important;
+  }
+  
+  /* Hero section adjustments */
+  body > div > div > div:first-of-type > section:first-of-type {
+    padding-top: 64px !important;
+    padding-bottom: 32px !important;
+  }
+}

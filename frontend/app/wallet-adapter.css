@@ -212,3 +212,10 @@ button.wallet-adapter-button-trigger:hover {
   box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
 }
 
+/* Hide default wallet adapter dropdown menu when connected */
+.wallet-adapter-button-trigger [role="menu"],
+.wallet-adapter-button-trigger ul[role="menu"],
+.wallet-adapter-dropdown-list {
+  display: none !important;
+}
+

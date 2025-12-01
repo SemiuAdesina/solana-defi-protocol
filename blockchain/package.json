@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "test": "anchor test",
+    "test:init-registry": "anchor test --skip-local-validator --skip-build tests/init-registry.spec.ts",
+    "init-registry": "anchor test --skip-local-validator --skip-build tests/init-registry.spec.ts",
     "lint": "eslint \"tests/**/*.ts\""
   },
   "devDependencies": {

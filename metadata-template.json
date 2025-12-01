@@ -1,0 +1,79 @@
+{
+  "name": "Solana Audit Registry",
+  "description": "Registry for tracking audit readiness and subsidy eligibility for Solana projects",
+  "version": "1.0.0",
+  "program": {
+    "id": "H3ZDWgBkZ9kxer2KjCeL2oFZkftZRUTikpd6PseXkgpL",
+    "network": "devnet",
+    "deployed": true
+  },
+  "auditReadiness": {
+    "registryMetadataPublished": true,
+    "ciPassing": true,
+    "graphqlIntegration": true,
+    "coverageThreshold": 80
+  },
+  "subsidyProgram": {
+    "name": "Solana Audit Subsidy Program",
+    "cohort": "Cohort III",
+    "applicationDeadline": "2025-12-07",
+    "subsidyRange": {
+      "min": 5000,
+      "max": 50000,
+      "currency": "USD"
+    },
+    "coverage": "up to 30% of audit costs",
+    "participatingAuditors": [
+      "Adevar Labs Inc.",
+      "Certora",
+      "ChainSecurity",
+      "Cyfrin",
+      "Guardian",
+      "Halborn",
+      "Hexens",
+      "Immunefi",
+      "Oak Security",
+      "Quantstamp",
+      "QuillAudits",
+      "Runtime Verification",
+      "Sherlock",
+      "Statemind",
+      "Zellic"
+    ],
+    "partners": [
+      "Superteam",
+      "MonkeDAO",
+      "Jito",
+      "Areta Market"
+    ]
+  },
+  "requirements": [
+    {
+      "id": "registry-metadata",
+      "title": "Registry Metadata Published",
+      "description": "Ensure registry metadata URI and checksum are set on-chain",
+      "status": "pending"
+    },
+    {
+      "id": "ci-passing",
+      "title": "CI Passing",
+      "description": "Latest pipeline must succeed with lint + tests + coverage",
+      "status": "pending"
+    },
+    {
+      "id": "graphql-integration",
+      "title": "GraphQL Integration",
+      "description": "Expose metadata & CI status via /graphql for reviewers",
+      "status": "completed"
+    }
+  ],
+  "links": {
+    "applicationForm": "https://forms.gle/...",
+    "earnPlatform": "https://earn.superteam.fun/...",
+    "documentation": "https://github.com/SemiuAdesina/solana-defi-protocol/blob/main/README.md",
+    "repository": "https://github.com/SemiuAdesina/solana-defi-protocol"
+  },
+  "timestamp": "2025-01-XX",
+  "authority": "EaDViQQPiBUqBCUXXkEsihCVHRcTuMctmnfEn9Mv9sqA"
+}
+

@@ -3,8 +3,28 @@
 import { SiSolana } from "react-icons/si";
 import { BsBoxSeam } from "react-icons/bs";
 import { FaGithub, FaBook, FaCode } from "react-icons/fa";
+import { useConnection } from "@solana/wallet-adapter-react";
 
 export const Footer = () => {
+  const { connection } = useConnection();
+  const rpcUrl = connection.rpcEndpoint;
+  
+  // Determine network name based on RPC URL
+  const getNetworkInfo = () => {
+    if (rpcUrl.includes("localhost") || rpcUrl.includes("127.0.0.1")) {
+      return { name: "Local Development", description: "localhost:8899" };
+    } else if (rpcUrl.includes("devnet") || rpcUrl.includes("api.devnet.solana.com")) {
+      return { name: "Solana Devnet", description: "Development Network" };
+    } else if (rpcUrl.includes("testnet") || rpcUrl.includes("api.testnet.solana.com")) {
+      return { name: "Solana Testnet", description: "Test Network" };
+    } else if (rpcUrl.includes("mainnet") || rpcUrl.includes("api.mainnet-beta.solana.com")) {
+      return { name: "Solana Mainnet", description: "Production Network" };
+    } else {
+      return { name: "Custom Network", description: rpcUrl };
+    }
+  };
+  
+  const networkInfo = getNetworkInfo();
   return (
     <footer style={{ position: 'relative', width: '100%', marginTop: '96px' }}>
       {/* Curved SVG Wave */}
@@ -64,8 +84,8 @@ export const Footer = () => {
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', borderRadius: '12px', background: 'linear-gradient(to right, rgba(88, 28, 135, 0.2), rgba(30, 58, 138, 0.2))', border: '1px solid rgba(147, 51, 234, 0.2)', backdropFilter: 'blur(4px)' }}>
                 <SiSolana style={{ fontSize: '24px', color: '#c084fc' }} />
                 <div>
-                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff' }}>Solana Testnet</p>
-                  <p style={{ fontSize: '12px', color: '#94a3b8' }}>Local Development</p>
+                  <p style={{ fontSize: '14px', fontWeight: 600, color: '#ffffff' }}>{networkInfo.name}</p>
+                  <p style={{ fontSize: '12px', color: '#94a3b8' }}>{networkInfo.description}</p>
                 </div>
               </div>
             </div>

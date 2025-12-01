@@ -2,7 +2,7 @@
 
 use anchor_lang::prelude::*;
 
-declare_id!("DZejfnpxWTyfX6XziQoCHUJgvksMhVPzDRnY9Gj3FTgt");
+declare_id!("H3ZDWgBkZ9kxer2KjCeL2oFZkftZRUTikpd6PseXkgpL");
 
 /// AuditRegistry program stores immutable metadata proving readiness posture.
 #[program]

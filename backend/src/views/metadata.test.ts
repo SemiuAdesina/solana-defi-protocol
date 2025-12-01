@@ -55,5 +55,27 @@ describe("metadata route", () => {
     const res = await request(app).get(`/metadata/${authority}`);
     expect(res.status).toBe(404);
   });
+
+  it("handles service errors gracefully", async () => {
+    const { app, mocks } = createDeps();
+    mocks.getRegistryByAuthority.mockRejectedValue(new Error("RPC connection failed"));
+    const res = await request(app).get(`/metadata/${authority}`);
+    expect(res.status).toBe(500);
+    expect(res.body).toMatchObject({ error: "MetadataLookupFailed" });
+  });
+
+  it("handles metadata with null URI and checksum", async () => {
+    const { app, mocks } = createDeps();
+    mocks.getRegistryByAuthority.mockResolvedValue({
+      authority,
+      version: 1,
+      bump: 255
+      // metadataUri and metadataChecksum are optional
+    });
+    const res = await request(app).get(`/metadata/${authority}`);
+    expect(res.status).toBe(200);
+    expect(res.body.metadataUri).toBeNull();
+    expect(res.body.metadataChecksum).toBeNull();
+  });
 });
 

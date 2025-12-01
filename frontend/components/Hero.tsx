@@ -21,14 +21,14 @@ export const Hero = () => {
                 <HiOutlineShieldCheck style={{ fontSize: '64px', color: '#e9d5ff' }} />
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px' }}>
-              <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-0.025em' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '12px', width: '100%' }}>
+              <h1 style={{ fontSize: '48px', fontWeight: 900, letterSpacing: '-0.025em', width: '100%' }}>
                 <span style={{ background: 'linear-gradient(to right, #c084fc, #93c5fd, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   Audit Readiness
                 </span>
               </h1>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}>
-                <div style={{ borderRadius: '50%', background: 'linear-gradient(to right, rgba(147, 51, 234, 0.2), rgba(37, 99, 235, 0.2))', padding: '8px', border: '1px solid rgba(147, 51, 234, 0.3)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ borderRadius: '50%', background: 'linear-gradient(to right, rgba(147, 51, 234, 0.2), rgba(37, 99, 235, 0.2))', padding: '8px', border: '1px solid rgba(147, 51, 234, 0.3)', flexShrink: 0 }}>
                   <HiOutlineSparkles style={{ fontSize: '20px', color: '#c084fc' }} />
                 </div>
                 <p style={{ fontSize: '20px', color: '#cbd5e1' }}>
@@ -39,7 +39,7 @@ export const Hero = () => {
           </div>
           
           {/* Description */}
-          <p style={{ fontSize: '18px', color: '#94a3b8', maxWidth: '896px', lineHeight: '1.75', padding: '0 16px' }}>
+          <p style={{ fontSize: '18px', color: '#94a3b8', maxWidth: '896px', lineHeight: '1.75', padding: '0 16px', width: '100%' }}>
             Advanced wallet-aware dashboard for subsidy preparation, CI monitoring, and on-chain metadata governance
           </p>
         </div>
