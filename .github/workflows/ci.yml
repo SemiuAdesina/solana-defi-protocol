@@ -17,9 +17,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: rust-lang/setup-rust-action@v1
         with:
-          toolchain: 1.82.0
+          rust-version: 1.82.0
           components: clippy
       - name: Install pnpm
         run: corepack enable
@@ -50,9 +51,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: rust-lang/setup-rust-action@v1
         with:
-          toolchain: 1.82.0
+          rust-version: 1.82.0
           components: clippy, rustfmt
       - name: Install pnpm
         run: corepack enable
@@ -89,9 +91,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: rust-lang/setup-rust-action@v1
         with:
-          toolchain: 1.82.0
+          rust-version: 1.82.0
       - name: Install Solana CLI
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
@@ -151,9 +154,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - uses: actions-rs/toolchain@v1
+      - name: Install Rust toolchain
+        uses: rust-lang/setup-rust-action@v1
         with:
-          toolchain: 1.82.0
+          rust-version: 1.82.0
       - name: Install Solana CLI
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
