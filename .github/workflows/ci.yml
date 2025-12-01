@@ -183,71 +183,65 @@ jobs:
         working-directory: blockchain
         run: |
           export PATH="$HOME/.avm/bin:$PATH"
-          # Ensure anchor is available (should already be set up from Install Anchor CLI step)
-          if ! command -v anchor >/dev/null 2>&1; then
-            echo "ERROR: anchor command not found, checking setup..."
-            avm list 2>&1 || true
-            ls -la "$HOME/.avm/bin/" || true
-            # Try to create symlink if version exists
-            if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
-              mkdir -p "$HOME/.avm/bin"
-              ln -sfn "$HOME/.avm/versions/0.30.1/anchor" "$HOME/.avm/bin/anchor"
-              chmod +x "$HOME/.avm/bin/anchor"
-            elif command -v anchor-cli >/dev/null 2>&1; then
-              mkdir -p "$HOME/.avm/bin"
-              ln -sfn "$(which anchor-cli)" "$HOME/.avm/bin/anchor"
+          
+          # Find and use Anchor CLI - prioritize direct binary path
+          ANCHOR_CMD=""
+          
+          # Priority 1: Direct binary path (doesn't need avm config, most reliable)
+          DIRECT_BINARY="$HOME/.avm/versions/0.30.1/anchor"
+          if [ -f "$DIRECT_BINARY" ]; then
+            echo "Found direct Anchor binary at: $DIRECT_BINARY"
+            if "$DIRECT_BINARY" --version >/dev/null 2>&1; then
+              ANCHOR_CMD="$DIRECT_BINARY"
+              echo "✓ Using direct binary (no avm config needed)"
             else
-              echo "ERROR: No anchor binary found"
-              exit 1
+              echo "Direct binary exists but failed version check"
             fi
           fi
-          # Ensure avm knows which version to use, or use binary directly
-          ANCHOR_CMD="anchor"
-          export PATH="$HOME/.avm/bin:$PATH"
           
-          # Check if binary exists directly
-          if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
-            echo "Anchor binary found at $HOME/.avm/versions/0.30.1/anchor"
-            # Try to set version with avm
-            echo "Attempting to set Anchor version with avm..."
+          # Priority 2: Try avm wrapper if direct binary didn't work
+          if [ -z "$ANCHOR_CMD" ] && command -v avm >/dev/null 2>&1; then
+            echo "Attempting to configure avm wrapper..."
             if yes | avm use 0.30.1 >/dev/null 2>&1; then
-              echo "avm use succeeded, using anchor command"
-              # Test if anchor command works
-              if anchor --version >/dev/null 2>&1; then
-                ANCHOR_CMD="anchor"
-              else
-                echo "anchor command failed, using binary directly"
-                ANCHOR_CMD="$HOME/.avm/versions/0.30.1/anchor"
+              if command -v anchor >/dev/null 2>&1; then
+                if anchor --version >/dev/null 2>&1; then
+                  ANCHOR_CMD="anchor"
+                  echo "✓ Using anchor via avm wrapper"
+                fi
               fi
-            else
-              echo "avm use failed, using binary directly"
-              ANCHOR_CMD="$HOME/.avm/versions/0.30.1/anchor"
             fi
-          elif [ -f "$HOME/.avm/bin/anchor" ]; then
-            echo "Found anchor binary at $HOME/.avm/bin/anchor"
-            ANCHOR_CMD="$HOME/.avm/bin/anchor"
-          elif command -v anchor-cli >/dev/null 2>&1; then
-            echo "Found anchor-cli, creating symlink"
-            mkdir -p "$HOME/.avm/bin"
-            ln -sfn "$(which anchor-cli)" "$HOME/.avm/bin/anchor"
-            chmod +x "$HOME/.avm/bin/anchor"
-            ANCHOR_CMD="anchor"
-          else
-            echo "ERROR: Cannot find anchor binary anywhere"
-            echo "Debug info:"
-            avm list 2>&1 || true
-            ls -la "$HOME/.avm/bin/" 2>&1 || true
-            ls -la "$HOME/.avm/versions/0.30.1/" 2>&1 || true
+          fi
+          
+          # Priority 3: Fallback to direct binary even if test failed earlier
+          if [ -z "$ANCHOR_CMD" ] && [ -f "$DIRECT_BINARY" ]; then
+            ANCHOR_CMD="$DIRECT_BINARY"
+            echo "✓ Fallback: Using direct binary path"
+          fi
+          
+          # Verify Anchor CLI is available
+          if [ -z "$ANCHOR_CMD" ]; then
+            echo "ERROR: Cannot find working Anchor CLI"
+            echo "Debug information:"
+            echo "  Checking direct binary:"
+            ls -la "$DIRECT_BINARY" 2>&1 || echo "    Not found at $DIRECT_BINARY"
+            echo "  Checking versions directory:"
+            ls -la "$HOME/.avm/versions/0.30.1/" 2>&1 | head -5 || echo "    Directory does not exist"
+            echo "  Checking avm bin:"
+            ls -la "$HOME/.avm/bin/" 2>&1 | head -5 || echo "    Directory does not exist"
+            echo "  Checking avm versions:"
+            avm list 2>&1 | head -10 || echo "    avm command not available"
             exit 1
           fi
           
-          echo "Anchor version (using: $ANCHOR_CMD):"
+          # Test Anchor CLI
+          echo "Testing Anchor CLI (command: $ANCHOR_CMD):"
           if $ANCHOR_CMD --version 2>&1; then
-            echo "Anchor CLI is working"
+            echo "✓ Anchor CLI is working"
           else
-            echo "ERROR: Anchor CLI failed to show version"
+            echo "ERROR: Anchor CLI failed version check"
             exit 1
           fi
+          
           echo "Running Anchor tests..."
           $ANCHOR_CMD test -- --nocapture
       - name: Generate coverage report
