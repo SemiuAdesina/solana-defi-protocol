@@ -12,11 +12,13 @@ const DISCRIMINATOR = createHash("sha256")
 
 describe("RegistryService", () => {
   let mockConnection: Connection;
+  let getAccountInfoMock: ReturnType<typeof vi.fn>;
   let service: ReturnType<typeof createRegistryService>;
 
   beforeEach(() => {
+    getAccountInfoMock = vi.fn();
     mockConnection = {
-      getAccountInfo: vi.fn()
+      getAccountInfo: getAccountInfoMock
     } as unknown as Connection;
     service = createRegistryService({ connection: mockConnection });
   });
@@ -30,17 +32,17 @@ describe("RegistryService", () => {
     );
 
     it("returns null when account does not exist", async () => {
-      vi.mocked(mockConnection.getAccountInfo).mockResolvedValue(null);
+      getAccountInfoMock.mockResolvedValue(null);
 
       const result = await service.getRegistryByAuthority(authority);
 
       expect(result).toBeNull();
-      expect(mockConnection.getAccountInfo).toHaveBeenCalledWith(registryPda);
+      expect(getAccountInfoMock).toHaveBeenCalledWith(registryPda);
     });
 
     it("returns null when account exists but is not owned by program", async () => {
       const otherProgramId = PublicKey.unique();
-      vi.mocked(mockConnection.getAccountInfo).mockResolvedValue({
+      getAccountInfoMock.mockResolvedValue({
         data: Buffer.alloc(285),
         owner: otherProgramId,
         executable: false,
@@ -55,7 +57,7 @@ describe("RegistryService", () => {
 
     it("returns null when account data is too short", async () => {
       const shortData = Buffer.alloc(52); // Less than minimum 53 bytes
-      vi.mocked(mockConnection.getAccountInfo).mockResolvedValue({
+      getAccountInfoMock.mockResolvedValue({
         data: shortData,
         owner: PROGRAM_ID,
         executable: false,
@@ -72,7 +74,7 @@ describe("RegistryService", () => {
       const data = Buffer.alloc(285);
       // Set wrong discriminator
       data.fill(0, 0, 8);
-      vi.mocked(mockConnection.getAccountInfo).mockResolvedValue({
+      getAccountInfoMock.mockResolvedValue({
         data,
         owner: PROGRAM_ID,
         executable: false,
@@ -99,7 +101,7 @@ describe("RegistryService", () => {
       data.writeUInt32LE(0, 49);
       // Checksum is already zeros (bytes 53-84)
 
-      vi.mocked(mockConnection.getAccountInfo).mockResolvedValue({
+      getAccountInfoMock.mockResolvedValue({
         data,
         owner: PROGRAM_ID,
         executable: false,
@@ -138,7 +140,7 @@ describe("RegistryService", () => {
       // Set checksum (after URI)
       Buffer.from(checksum).copy(data, 53 + uriBytes.length);
 
-      vi.mocked(mockConnection.getAccountInfo).mockResolvedValue({
+      getAccountInfoMock.mockResolvedValue({
         data,
         owner: PROGRAM_ID,
         executable: false,
@@ -165,7 +167,7 @@ describe("RegistryService", () => {
       // Set URI length to 201 (exceeds limit of 200)
       data.writeUInt32LE(201, 49);
 
-      vi.mocked(mockConnection.getAccountInfo).mockResolvedValue({
+      getAccountInfoMock.mockResolvedValue({
         data,
         owner: PROGRAM_ID,
         executable: false,
@@ -193,7 +195,7 @@ describe("RegistryService", () => {
       data.writeUInt32LE(uriBytes.length, 49);
       uriBytes.copy(data, 53);
 
-      vi.mocked(mockConnection.getAccountInfo).mockResolvedValue({
+      getAccountInfoMock.mockResolvedValue({
         data,
         owner: PROGRAM_ID,
         executable: false,
@@ -210,11 +212,11 @@ describe("RegistryService", () => {
       const result = await service.getRegistryByAuthority("invalid-address");
 
       expect(result).toBeNull();
-      expect(mockConnection.getAccountInfo).not.toHaveBeenCalled();
+      expect(getAccountInfoMock).not.toHaveBeenCalled();
     });
 
     it("handles RPC connection errors gracefully", async () => {
-      vi.mocked(mockConnection.getAccountInfo).mockRejectedValue(
+      getAccountInfoMock.mockRejectedValue(
         new Error("RPC connection failed")
       );
 
@@ -224,4 +226,3 @@ describe("RegistryService", () => {
     });
   });
 });
-

@@ -19,7 +19,7 @@ jobs:
           node-version: 20
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.79.0
+          toolchain: 1.82.0
           components: clippy
       - name: Install pnpm
         run: corepack enable
@@ -52,7 +52,7 @@ jobs:
           node-version: 20
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.79.0
+          toolchain: 1.82.0
           components: clippy, rustfmt
       - name: Install pnpm
         run: corepack enable
@@ -91,7 +91,7 @@ jobs:
           node-version: 20
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.79.0
+          toolchain: 1.82.0
       - name: Install Solana CLI
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
@@ -153,7 +153,7 @@ jobs:
           node-version: 20
       - uses: actions-rs/toolchain@v1
         with:
-          toolchain: 1.79.0
+          toolchain: 1.82.0
       - name: Install Solana CLI
         run: |
           sh -c "$(curl -sSfL https://release.solana.com/stable/install)"

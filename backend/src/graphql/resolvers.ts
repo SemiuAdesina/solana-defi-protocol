@@ -33,7 +33,7 @@ export const createResolvers = (): Resolvers => ({
       // Validate authority is a valid Solana address
       try {
         new PublicKey(args.authority);
-      } catch (error) {
+      } catch {
         throw new Error(
           `Invalid authority address: "${args.authority}". ` +
           `Please provide a valid Solana address (base58 encoded, 32-44 characters). ` +

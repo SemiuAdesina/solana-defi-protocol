@@ -74,8 +74,8 @@ describe("metadata route", () => {
     });
     const res = await request(app).get(`/metadata/${authority}`);
     expect(res.status).toBe(200);
-    expect(res.body.metadataUri).toBeNull();
-    expect(res.body.metadataChecksum).toBeNull();
+    expect((res.body as { metadataUri: string | null; metadataChecksum: number[] | null }).metadataUri).toBeNull();
+    expect((res.body as { metadataUri: string | null; metadataChecksum: number[] | null }).metadataChecksum).toBeNull();
   });
 });
 

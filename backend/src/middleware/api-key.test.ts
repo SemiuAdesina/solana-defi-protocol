@@ -1,10 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import request from "supertest";
 import express from "express";
 import { createApiKeyGuard } from "./api-key.js";
 
 describe("createApiKeyGuard", () => {
-  const createApp = (apiKey: string) => {
+  const createApp = (apiKey: string): express.Application => {
     const app = express();
     app.use(express.json());
     app.use("/protected", createApiKeyGuard(apiKey));

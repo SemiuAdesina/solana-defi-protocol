@@ -13,8 +13,7 @@ const DISCRIMINATOR = createHash("sha256")
   .subarray(0, 8);
 
 // Minimum account size: discriminator (8) + authority (32) + version (8) + bump (1) + uri_len (4) = 53 bytes
-// Actual size varies based on URI length
-const MIN_ACCOUNT_SIZE = 53;
+// Actual size varies based on URI length (not used but documented for reference)
 
 export type RegistryServiceDeps = {
   connection: Connection;

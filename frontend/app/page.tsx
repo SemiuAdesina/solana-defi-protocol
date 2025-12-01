@@ -35,7 +35,7 @@ export default function HomePage() {
   const isSmallMobile = useMediaQuery("(max-width: 480px)");
   
   // Check if we're on Devnet
-  const rpcUrl = connection.rpcEndpoint;
+  const rpcUrl = connection && connection.rpcEndpoint ? String(connection.rpcEndpoint) : "";
   const isDevnet = rpcUrl.includes("devnet") || rpcUrl.includes("api.devnet.solana.com");
 
   type MetadataKey = ["metadata", string];
@@ -44,7 +44,10 @@ export default function HomePage() {
     RegistryMetadata | null,
     Error,
     MetadataKey | null
-  >(metadataKey, async ([, currentAuthority]) => fetchMetadata(currentAuthority));
+  >(metadataKey, async (key: MetadataKey) => {
+    const [, currentAuthority] = key;
+    return fetchMetadata(currentAuthority);
+  });
   const { data: statuses, isLoading: statusesLoading, error: statusesError } = useSWR("ci", fetchCiStatuses, {
     refreshInterval: 60_000
   });
@@ -69,7 +72,7 @@ export default function HomePage() {
             padding: '0 16px' 
           }}>
             <div style={{
-              padding: isSmallMobile ? '12px' : isMobile ? '16px' : '20px 24px',
+              padding: (isSmallMobile ? '12px' : isMobile ? '16px' : '20px 24px'),
               borderRadius: '12px',
               background: 'linear-gradient(to right, rgba(251, 191, 36, 0.2), rgba(251, 146, 60, 0.2))',
               border: '2px solid rgba(251, 191, 36, 0.5)',

@@ -1,18 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import { PublicKey } from "@solana/web3.js";
 
 import { createResolvers, type GraphContext } from "./resolvers.js";
 
 const resolvers = createResolvers();
 
-const createContext = (): {
-  ctx: GraphContext;
-  mocks: {
-    getRegistryByAuthority: ReturnType<typeof vi.fn>;
-    getRecent: ReturnType<typeof vi.fn>;
-    getStatus: ReturnType<typeof vi.fn>;
-  };
-} => {
+const createContext = () => {
   const getRegistryByAuthority = vi.fn<
     Parameters<GraphContext["registryService"]["getRegistryByAuthority"]>,
     ReturnType<GraphContext["registryService"]["getRegistryByAuthority"]>
@@ -26,17 +18,19 @@ const createContext = (): {
     ReturnType<GraphContext["ciStatusService"]["getStatus"]>
   >();
 
-  return {
-    ctx: {
-      registryService: {
-        getRegistryByAuthority
-      },
-      ciStatusService: {
-        getRecent,
-        getStatus,
-        addStatus: vi.fn()
-      }
+  const ctx: GraphContext = {
+    registryService: {
+      getRegistryByAuthority
     },
+    ciStatusService: {
+      getRecent,
+      getStatus,
+      addStatus: vi.fn()
+    }
+  };
+
+  return {
+    ctx,
     mocks: { getRegistryByAuthority, getRecent, getStatus }
   };
 };

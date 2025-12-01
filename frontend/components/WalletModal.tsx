@@ -3,7 +3,7 @@
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import type { WalletName } from "@solana/wallet-adapter-base";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { FaTimes } from "react-icons/fa";
 
 export const WalletModal = () => {
@@ -19,10 +19,10 @@ export const WalletModal = () => {
     return null;
   }
 
-  const handleWalletSelect = (walletName: WalletName) => {
-    select(walletName);
+  const handleWalletSelect = useCallback((walletName: WalletName) => {
+    select?.(walletName);
     setVisible(false);
-  };
+  }, [select, setVisible]);
 
   return (
     <div
