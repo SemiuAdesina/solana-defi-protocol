@@ -66,21 +66,73 @@ jobs:
         run: |
           pnpm install
           pnpm lint
-      - name: Blockchain clippy
-        working-directory: blockchain
+      - name: Install Solana CLI
         run: |
+          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+      - name: Install Anchor CLI for linting
+        run: |
+          cargo install --git https://github.com/coral-xyz/anchor avm --locked --force || true
+          export PATH="$HOME/.avm/bin:$PATH"
+          echo "$HOME/.avm/bin" >> $GITHUB_PATH
+          # Try to install Anchor 0.30.1 for macro expansion
+          timeout 180 yes | avm install 0.30.1 2>&1 | tail -20 || echo "avm install failed, will try cargo install"
+          if [ ! -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            # Fallback to cargo install
+            export PATH="$HOME/.cargo/bin:$PATH"
+            cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --force >/dev/null 2>&1 || echo "cargo install also failed"
+            if command -v anchor-cli >/dev/null 2>&1 || [ -f "$HOME/.cargo/bin/anchor-cli" ]; then
+              mkdir -p "$HOME/.avm/bin"
+              ANCHOR_PATH=$(command -v anchor-cli || echo "$HOME/.cargo/bin/anchor-cli")
+              ln -sfn "$ANCHOR_PATH" "$HOME/.avm/bin/anchor" 2>/dev/null || true
+            fi
+          fi
+          # Verify Anchor is available
+          if command -v anchor >/dev/null 2>&1 || [ -f "$HOME/.avm/bin/anchor" ] || [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            echo "Anchor CLI available for linting"
+          else
+            echo "WARNING: Anchor CLI not available, skipping Anchor program linting"
+          fi
+      - name: Blockchain fmt
+        working-directory: blockchain
+        run: cargo fmt -- --check
+      - name: Blockchain clippy (with Anchor)
+        working-directory: blockchain
+        continue-on-error: false
+        run: |
+          export PATH="$HOME/.cargo/bin:$HOME/.avm/bin:$PATH"
+          # Find Anchor CLI
+          ANCHOR_CMD=""
+          if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            ANCHOR_CMD="$HOME/.avm/versions/0.30.1/anchor"
+          elif command -v anchor >/dev/null 2>&1; then
+            ANCHOR_CMD="anchor"
+          elif [ -f "$HOME/.cargo/bin/anchor-cli" ]; then
+            ANCHOR_CMD="$HOME/.cargo/bin/anchor-cli"
+          fi
+          
+          if [ -n "$ANCHOR_CMD" ]; then
+            echo "Running anchor build to set up macros..."
+            $ANCHOR_CMD build 2>&1 | tail -50 || echo "anchor build had warnings (continuing with clippy)"
+          else
+            echo "WARNING: Anchor CLI not found, attempting clippy without anchor build..."
+          fi
+          
+          # Now run clippy
           cargo clippy --all-targets --all-features -- -D warnings || {
             echo "Clippy found warnings or errors"
             exit 1
           }
-      - name: Blockchain fmt
-        working-directory: blockchain
-        run: cargo fmt -- --check
       - name: Solana program static analysis
         working-directory: blockchain
+        continue-on-error: false
         run: |
-          cargo install cargo-audit --locked
-          cargo clippy --all-targets --all-features -- -D warnings -W clippy::arithmetic_side_effects -W clippy::unwrap_used
+          export PATH="$HOME/.cargo/bin:$HOME/.avm/bin:$PATH"
+          cargo install cargo-audit --locked || true
+          cargo clippy --all-targets --all-features -- -D warnings -W clippy::arithmetic_side_effects -W clippy::unwrap_used || {
+            echo "Clippy static analysis found warnings or errors"
+            exit 1
+          }
 
   test:
     runs-on: ubuntu-latest

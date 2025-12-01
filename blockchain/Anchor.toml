@@ -1,10 +1,7 @@
 [programs.localnet]
-# Currently deployed program ID (update if redeploying with declared ID)
 audit_registry = "H3ZDWgBkZ9kxer2KjCeL2oFZkftZRUTikpd6PseXkgpL"
-# Declared program ID in lib.rs: DZejfnpxWTyfX6XziQoCHUJgvksMhVPzDRnY9Gj3FTgt
 
 [programs.devnet]
-# Will be set after deployment
 audit_registry = "H3ZDWgBkZ9kxer2KjCeL2oFZkftZRUTikpd6PseXkgpL"
 
 [registry]
