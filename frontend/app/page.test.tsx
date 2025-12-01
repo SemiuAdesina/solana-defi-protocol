@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("../components/Header", () => ({
@@ -45,7 +45,8 @@ vi.mock("swr", () => ({
 }));
 
 vi.mock("next/dynamic", () => ({
-  default: (loader: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  default: (_loader: any) => {
     const Component = () => <div>Dynamic Component</div>;
     Component.displayName = "DynamicComponent";
     return Component;

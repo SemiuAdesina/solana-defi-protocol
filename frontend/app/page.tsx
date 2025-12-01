@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-floating-promises */
 
 import { useCallback, useState } from "react";
 import useSWR from "swr";
@@ -13,7 +14,7 @@ import { Footer } from "../components/Footer";
 import { SectionDivider } from "../components/SectionDivider";
 import { MetadataCard } from "../components/MetadataCard";
 import { CiStatusBoard } from "../components/CiStatusBoard";
-import { fetchMetadata, fetchCiStatuses, type RegistryMetadata } from "../lib/api";
+import { fetchMetadata, fetchCiStatuses, type RegistryMetadata, type CiStatus } from "../lib/api";
 import { SubsidyChecklist } from "../components/SubsidyChecklist";
 
 const GraphExplorer = dynamic(() => import("../components/GraphExplorer"), {
@@ -45,12 +46,18 @@ export default function HomePage() {
     Error,
     MetadataKey | null
   >(metadataKey, async (key: MetadataKey) => {
-    const [, currentAuthority] = key;
+    const currentAuthority = key[1];
     return fetchMetadata(currentAuthority);
   });
-  const { data: statuses, isLoading: statusesLoading, error: statusesError } = useSWR("ci", fetchCiStatuses, {
-    refreshInterval: 60_000
-  });
+  const swrResult = useSWR<CiStatus[], Error>(
+    "ci",
+    fetchCiStatuses,
+    {
+      refreshInterval: 60_000
+    }
+  );
+  const { data: statuses, isLoading: statusesLoading } = swrResult;
+  const statusesError = swrResult.error instanceof Error ? swrResult.error : undefined;
 
   const handleAuthorityChange = useCallback((nextAuthority: string) => {
     setAuthority(nextAuthority);
@@ -223,7 +230,7 @@ export default function HomePage() {
                 onRegistryInitialized={() => {
                   // Refresh metadata after initialization
                   if (authority) {
-                    mutateMetadata();
+                    void mutateMetadata();
                   }
                 }}
               />

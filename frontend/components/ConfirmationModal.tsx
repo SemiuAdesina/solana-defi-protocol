@@ -1,6 +1,6 @@
 "use client";
 
-import { FaExclamationTriangle, FaCheck, FaTimes } from "react-icons/fa";
+import { FaExclamationTriangle, FaCheck } from "react-icons/fa";
 
 type ConfirmationModalProps = {
   isOpen: boolean;

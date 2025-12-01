@@ -24,7 +24,7 @@ describe("API functions", () => {
     it("fetches metadata successfully", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockMetadata
+        json: () => Promise.resolve(mockMetadata)
       });
 
       const result = await fetchMetadata(mockAuthority);
@@ -62,7 +62,7 @@ describe("API functions", () => {
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => metadataWithNulls
+        json: () => Promise.resolve(metadataWithNulls)
       });
 
       const result = await fetchMetadata(mockAuthority);
@@ -86,7 +86,7 @@ describe("API functions", () => {
     it("fetches CI statuses successfully", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockStatuses
+        json: () => Promise.resolve(mockStatuses)
       });
 
       const result = await fetchCiStatuses();
@@ -115,7 +115,7 @@ describe("API functions", () => {
     it("returns empty array when response is empty", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => []
+        json: () => Promise.resolve([])
       });
 
       const result = await fetchCiStatuses();

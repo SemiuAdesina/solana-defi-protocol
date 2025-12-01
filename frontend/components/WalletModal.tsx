@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @typescript-eslint/unbound-method */
 
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
