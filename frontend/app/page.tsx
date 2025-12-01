@@ -1,5 +1,5 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-floating-promises */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { useCallback, useState } from "react";
 import useSWR from "swr";

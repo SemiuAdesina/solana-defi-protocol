@@ -1,5 +1,5 @@
 "use client";
-/* eslint-disable @typescript-eslint/unbound-method, @typescript-eslint/no-floating-promises, @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/unbound-method */
 
 import { WalletMultiButton, useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -275,7 +275,10 @@ export const WalletSection = ({ onAuthorityChange }: WalletSectionProps) => {
 
                 {/* Menu Items */}
                 <button
-                  onClick={handleCopy}
+                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                  onClick={() => {
+                    void handleCopy();
+                  }}
                   style={{
                     width: '100%',
                     background: 'rgba(0, 0, 0, 0.4)',
@@ -339,7 +342,10 @@ export const WalletSection = ({ onAuthorityChange }: WalletSectionProps) => {
                 </button>
 
                 <button
-                  onClick={handleDisconnect}
+                  // eslint-disable-next-line @typescript-eslint/no-misused-promises
+                  onClick={() => {
+                    void handleDisconnect();
+                  }}
                   style={{
                     width: '100%',
                     background: 'rgba(0, 0, 0, 0.4)',

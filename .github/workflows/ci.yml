@@ -103,22 +103,46 @@ jobs:
           echo "$HOME/.avm/bin" >> $GITHUB_PATH
           # Install Anchor 0.30.1
           echo "Installing Anchor 0.30.1..."
-          avm install 0.30.1 2>&1 || echo "Install may have issues, continuing..."
-          sleep 3
-          # Use the version - handle prompt non-interactively
-          echo "Activating Anchor 0.30.1..."
-          echo "y" | avm use 0.30.1 2>&1 || {
-            echo "avm use had issues, trying direct symlink..."
-            if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+          # Clean up ALL possible anchor binaries and conflicts
+          rm -f "$HOME/.avm/bin/anchor" "$HOME/.avm/bin/anchor-cli"
+          rm -rf "$HOME/.avm/versions/0.30.1"
+          # Also remove from cargo bin if it exists there (might cause conflicts)
+          rm -f "$HOME/.cargo/bin/anchor" "$HOME/.cargo/bin/anchor-cli" 2>/dev/null || true
+          # Find and remove any existing anchor binaries that might conflict
+          find "$HOME/.cargo/bin" -name "anchor*" -type f -delete 2>/dev/null || true
+          # Install with yes to handle prompts, with better error handling
+          if timeout 180 yes | avm install 0.30.1 2>&1; then
+            echo "avm install succeeded"
+          else
+            echo "avm install failed, trying cargo install as fallback..."
+            # Try cargo install directly
+            cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --locked --force 2>&1 || true
+            # If cargo install worked, create symlink
+            if command -v anchor-cli >/dev/null 2>&1; then
               mkdir -p "$HOME/.avm/bin"
-              rm -f "$HOME/.avm/bin/anchor" "$HOME/.avm/bin/anchor-cli"
-              ln -sfn "$HOME/.avm/versions/0.30.1/anchor" "$HOME/.avm/bin/anchor"
+              ln -sfn "$(which anchor-cli)" "$HOME/.avm/bin/anchor"
               chmod +x "$HOME/.avm/bin/anchor"
+              echo "Using cargo-installed anchor-cli"
             fi
-          }
+          fi
+          sleep 3
+          # Create symlink directly if version exists
+          if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            mkdir -p "$HOME/.avm/bin"
+            rm -f "$HOME/.avm/bin/anchor" "$HOME/.avm/bin/anchor-cli"
+            ln -sfn "$HOME/.avm/versions/0.30.1/anchor" "$HOME/.avm/bin/anchor"
+            chmod +x "$HOME/.avm/bin/anchor"
+            echo "Created direct symlink to Anchor 0.30.1"
+          elif command -v anchor-cli >/dev/null 2>&1 && [ ! -f "$HOME/.avm/bin/anchor" ]; then
+            # Fallback: use cargo-installed version if available
+            mkdir -p "$HOME/.avm/bin"
+            ln -sfn "$(which anchor-cli)" "$HOME/.avm/bin/anchor"
+            chmod +x "$HOME/.avm/bin/anchor"
+            echo "Using cargo-installed anchor-cli as fallback"
+          fi
           # Verify and set version in avm config
           export PATH="$HOME/.avm/bin:$PATH"
-          if ! anchor --version 2>&1; then
+          if ! command -v anchor >/dev/null 2>&1; then
             echo "ERROR: Anchor CLI verification failed"
             echo "Debug info:"
             avm list 2>&1 || true
@@ -127,7 +151,6 @@ jobs:
             exit 1
           fi
           # Ensure version is set for anchor commands
-          avm use 0.30.1 --force 2>&1 || echo "Note: version already in use or set"
           echo "Anchor CLI ready"
       - name: Install pnpm
         run: corepack enable
@@ -145,26 +168,25 @@ jobs:
         working-directory: blockchain
         run: |
           export PATH="$HOME/.avm/bin:$PATH"
-          # Ensure Anchor version is set and available
-          echo "Checking Anchor setup..."
-          avm list 2>&1 || true
-          # Set version explicitly before test
-          echo "y" | avm use 0.30.1 2>&1 || {
-            # Fallback: ensure binary is accessible
+          # Ensure anchor is available (should already be set up from Install Anchor CLI step)
+          if ! command -v anchor >/dev/null 2>&1; then
+            echo "ERROR: anchor command not found, checking setup..."
+            avm list 2>&1 || true
+            ls -la "$HOME/.avm/bin/" || true
+            # Try to create symlink if version exists
             if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
               mkdir -p "$HOME/.avm/bin"
               ln -sfn "$HOME/.avm/versions/0.30.1/anchor" "$HOME/.avm/bin/anchor"
               chmod +x "$HOME/.avm/bin/anchor"
+            elif command -v anchor-cli >/dev/null 2>&1; then
+              mkdir -p "$HOME/.avm/bin"
+              ln -sfn "$(which anchor-cli)" "$HOME/.avm/bin/anchor"
+            else
+              echo "ERROR: No anchor binary found"
+              exit 1
             fi
-          }
-          # Verify anchor is available
-          export PATH="$HOME/.avm/bin:$PATH"
-          if ! command -v anchor >/dev/null 2>&1; then
-            echo "ERROR: anchor command not found in PATH"
-            echo "PATH: $PATH"
-            ls -la "$HOME/.avm/bin/" || true
-            exit 1
           fi
+          export PATH="$HOME/.avm/bin:$PATH"
           echo "Anchor version:"
           anchor --version
           echo "Running Anchor tests..."
@@ -217,22 +239,46 @@ jobs:
           echo "$HOME/.avm/bin" >> $GITHUB_PATH
           # Install Anchor 0.30.1
           echo "Installing Anchor 0.30.1..."
-          avm install 0.30.1 2>&1 || echo "Install may have issues, continuing..."
-          sleep 3
-          # Use the version - handle prompt non-interactively
-          echo "Activating Anchor 0.30.1..."
-          echo "y" | avm use 0.30.1 2>&1 || {
-            echo "avm use had issues, trying direct symlink..."
-            if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+          # Clean up ALL possible anchor binaries and conflicts
+          rm -f "$HOME/.avm/bin/anchor" "$HOME/.avm/bin/anchor-cli"
+          rm -rf "$HOME/.avm/versions/0.30.1"
+          # Also remove from cargo bin if it exists there (might cause conflicts)
+          rm -f "$HOME/.cargo/bin/anchor" "$HOME/.cargo/bin/anchor-cli" 2>/dev/null || true
+          # Find and remove any existing anchor binaries that might conflict
+          find "$HOME/.cargo/bin" -name "anchor*" -type f -delete 2>/dev/null || true
+          # Install with yes to handle prompts, with better error handling
+          if timeout 180 yes | avm install 0.30.1 2>&1; then
+            echo "avm install succeeded"
+          else
+            echo "avm install failed, trying cargo install as fallback..."
+            # Try cargo install directly
+            cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --locked --force 2>&1 || true
+            # If cargo install worked, create symlink
+            if command -v anchor-cli >/dev/null 2>&1; then
               mkdir -p "$HOME/.avm/bin"
-              rm -f "$HOME/.avm/bin/anchor" "$HOME/.avm/bin/anchor-cli"
-              ln -sfn "$HOME/.avm/versions/0.30.1/anchor" "$HOME/.avm/bin/anchor"
+              ln -sfn "$(which anchor-cli)" "$HOME/.avm/bin/anchor"
               chmod +x "$HOME/.avm/bin/anchor"
+              echo "Using cargo-installed anchor-cli"
             fi
-          }
+          fi
+          sleep 3
+          # Create symlink directly if version exists
+          if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            mkdir -p "$HOME/.avm/bin"
+            rm -f "$HOME/.avm/bin/anchor" "$HOME/.avm/bin/anchor-cli"
+            ln -sfn "$HOME/.avm/versions/0.30.1/anchor" "$HOME/.avm/bin/anchor"
+            chmod +x "$HOME/.avm/bin/anchor"
+            echo "Created direct symlink to Anchor 0.30.1"
+          elif command -v anchor-cli >/dev/null 2>&1 && [ ! -f "$HOME/.avm/bin/anchor" ]; then
+            # Fallback: use cargo-installed version if available
+            mkdir -p "$HOME/.avm/bin"
+            ln -sfn "$(which anchor-cli)" "$HOME/.avm/bin/anchor"
+            chmod +x "$HOME/.avm/bin/anchor"
+            echo "Using cargo-installed anchor-cli as fallback"
+          fi
           # Verify and set version in avm config
           export PATH="$HOME/.avm/bin:$PATH"
-          if ! anchor --version 2>&1; then
+          if ! command -v anchor >/dev/null 2>&1; then
             echo "ERROR: Anchor CLI verification failed"
             echo "Debug info:"
             avm list 2>&1 || true
@@ -241,7 +287,6 @@ jobs:
             exit 1
           fi
           # Ensure version is set for anchor commands
-          avm use 0.30.1 --force 2>&1 || echo "Note: version already in use or set"
           echo "Anchor CLI ready"
       - name: Install pnpm
         run: corepack enable

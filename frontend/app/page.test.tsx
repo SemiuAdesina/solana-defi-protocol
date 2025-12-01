@@ -46,7 +46,7 @@ vi.mock("swr", () => ({
 
 vi.mock("next/dynamic", () => ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  default: (_loader: any) => {
+  default: () => {
     const Component = () => <div>Dynamic Component</div>;
     Component.displayName = "DynamicComponent";
     return Component;
