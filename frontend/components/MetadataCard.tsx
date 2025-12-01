@@ -1,5 +1,5 @@
 "use client";
-/* eslint-disable no-console, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises */
+/* eslint-disable no-console */
 
 import type { RegistryMetadata } from "../lib/api";
 import { fetchMetadata } from "../lib/api";
@@ -52,23 +52,6 @@ async function calculateChecksum(uri: string): Promise<number[]> {
   return Array.from(new Uint8Array(hashBuffer));
 }
 
-async function calculateRegistryDiscriminator(): Promise<Uint8Array> {
-  // Calculate the discriminator for "account:Registry" (Anchor convention)
-  const encoder = new TextEncoder();
-  const data = encoder.encode("account:Registry");
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  return new Uint8Array(hashBuffer).subarray(0, 8);
-}
-
-function isValidRegistryAccount(accountData: Uint8Array, discriminator: Uint8Array): boolean {
-  // Check if account has minimum size (at least 8 bytes for discriminator)
-  if (accountData.length < 8) {
-    return false;
-  }
-  // Check if discriminator matches
-  const accountDiscriminator = accountData.subarray(0, 8);
-  return accountDiscriminator.every((byte, index) => byte === discriminator[index]);
-}
 
 export const MetadataCard = ({ metadata, loading, authority, onRegistryInitialized }: MetadataCardProps) => {
   const { publicKey, signTransaction } = useWallet();
@@ -136,7 +119,7 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
       new TextEncoder().encode("registry"),
       publicKey.toBuffer()
     ];
-    const [registryPda, bump] = PublicKey.findProgramAddressSync(
+    const [registryPda] = PublicKey.findProgramAddressSync(
       registrySeeds,
       PROGRAM_ID
     );
@@ -148,7 +131,6 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
       console.log("Connection RPC:", rpcUrl);
 
       console.log("Registry PDA:", registryPda.toBase58());
-      console.log("Bump:", bump);
 
       // Check via backend API first - this properly validates the registry using discriminator
       // If backend returns metadata, the registry exists and is valid - don't initialize
@@ -246,8 +228,8 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
               break;
             }
           }
-        } catch (err) {
-          console.log(`Confirmation attempt ${attempts}/${maxAttempts}...`);
+        } catch {
+          // Ignore confirmation errors
         }
       }
 
@@ -259,7 +241,7 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
             // Transaction succeeded even though confirmation timed out
             confirmed = true;
           }
-        } catch (err) {
+        } catch {
           // Ignore
         }
       }
@@ -273,7 +255,7 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
       const rpcUrlForExplorer = connection.rpcEndpoint;
       const explorerUrl = `https://explorer.solana.com/tx/${signature}?cluster=${rpcUrlForExplorer.includes("devnet") ? "devnet" : "mainnet-beta"}`;
       toast.success(
-        (_t) => (
+        () => (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <div style={{ fontWeight: 600 }}>Registry initialized successfully!</div>
             <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.8)" }}>
@@ -300,15 +282,16 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
       if (onRegistryInitialized) {
         onRegistryInitialized();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error initializing registry:", error);
-      const errorMessage = error.message || error.toString() || "Failed to initialize registry";
+      const errorMessage = error instanceof Error ? error.message : String(error) || "Failed to initialize registry";
       
       // Check if error is about account already existing
+      const errorObj = error && typeof error === "object" ? error as { logs?: string[] } : null;
       const isAccountExistsError = errorMessage.includes("already in use") || 
                                    errorMessage.includes("account already exists") ||
                                    errorMessage.includes("0x0") ||
-                                   (error.logs && error.logs.some((log: string) => log.includes("already in use")));
+                                   (errorObj?.logs && errorObj.logs.some((log: string) => log.includes("already in use")));
       
       const rpcUrl = connection.rpcEndpoint;
       const isDevnet = rpcUrl.includes("devnet") || rpcUrl.includes("api.devnet.solana.com");
@@ -340,7 +323,7 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
       }
       
       toast.error(
-        (_t) => (
+        () => (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <div style={{ fontWeight: 600 }}>Error: {errorMessage}</div>
             {helpText && (
@@ -426,7 +409,7 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
         new TextEncoder().encode("registry"),
         publicKey.toBuffer()
       ];
-      const [registryPda, bump] = PublicKey.findProgramAddressSync(
+      const [registryPda] = PublicKey.findProgramAddressSync(
         registrySeeds,
         PROGRAM_ID
       );
@@ -521,8 +504,8 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
               break;
             }
           }
-        } catch (err) {
-          console.log(`Confirmation attempt ${attempts}/${maxAttempts}...`);
+        } catch {
+          // Ignore confirmation errors
         }
       }
 
@@ -553,8 +536,8 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
               }
             }
           }
-        } catch (err) {
-          console.error("Error verifying account:", err);
+        } catch {
+          // Ignore verification errors
         }
       }
 
@@ -584,8 +567,9 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
         if (tx?.meta?.err) {
           throw new Error(`Transaction failed: ${JSON.stringify(tx.meta.err)}`);
         }
-      } catch (err: any) {
-        if (err.message && !err.message.includes("Transaction failed")) {
+      } catch (err: unknown) {
+        const errMessage = err instanceof Error ? err.message : String(err);
+        if (errMessage && !errMessage.includes("Transaction failed")) {
           console.warn("Could not fetch transaction details:", err);
         } else {
           throw err;
@@ -642,7 +626,7 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
         } else {
           console.warn("Could not fetch account info for verification");
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error("Final verification error:", err);
         // Don't throw - transaction might still have succeeded
       }
@@ -650,7 +634,7 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
       const rpcUrlForExplorer = connection.rpcEndpoint;
       const explorerUrl = `https://explorer.solana.com/tx/${signature}?cluster=${rpcUrlForExplorer.includes("devnet") ? "devnet" : "mainnet-beta"}`;
       toast.success(
-        (_t) => (
+        () => (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <div style={{ fontWeight: 600 }}>Metadata updated successfully!</div>
             <div style={{ fontSize: "12px", color: "rgba(255, 255, 255, 0.8)" }}>
@@ -688,9 +672,9 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
       setTimeout(() => {
         window.location.reload();
       }, 3000);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error updating metadata:", error);
-      const errorMessage = error.message || error.toString() || "Failed to update metadata";
+      const errorMessage = error instanceof Error ? error.message : String(error) || "Failed to update metadata";
       
       const rpcUrl = connection.rpcEndpoint;
       const isDevnet = rpcUrl.includes("devnet") || rpcUrl.includes("api.devnet.solana.com");
@@ -706,7 +690,7 @@ export const MetadataCard = ({ metadata, loading, authority, onRegistryInitializ
       }
       
       toast.error(
-        (_t) => (
+        () => (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
             <div style={{ fontWeight: 600 }}>Error: {errorMessage}</div>
             {helpText && (

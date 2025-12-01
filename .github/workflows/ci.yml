@@ -150,8 +150,21 @@ jobs:
             ls -la "$HOME/.avm/versions/0.30.1/" 2>&1 || true
             exit 1
           fi
-          # Ensure version is set for anchor commands
-          echo "Anchor CLI ready"
+          # Set anchor version in avm config (required for anchor commands)
+          if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            echo "Setting Anchor version to 0.30.1..."
+            yes | avm use 0.30.1 2>&1 || echo "Note: avm use may have issues, but binary exists"
+          fi
+          # Verify anchor works - try direct binary call if avm wrapper fails
+          export PATH="$HOME/.avm/bin:$PATH"
+          if anchor --version 2>&1; then
+            echo "Anchor CLI ready and verified"
+          elif [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            echo "Using Anchor binary directly (avm wrapper not working)"
+            "$HOME/.avm/versions/0.30.1/anchor" --version 2>&1 || echo "Warning: Could not get anchor version"
+          else
+            echo "Warning: anchor --version failed, but continuing..."
+          fi
       - name: Install pnpm
         run: corepack enable
       - name: Backend test
@@ -186,11 +199,32 @@ jobs:
               exit 1
             fi
           fi
+          # Ensure avm knows which version to use
+          ANCHOR_CMD="anchor"
+          if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            echo "Setting Anchor version in avm config..."
+            if yes | avm use 0.30.1 2>&1; then
+              echo "avm use succeeded"
+            else
+              echo "avm use failed, will use binary directly"
+              ANCHOR_CMD="$HOME/.avm/versions/0.30.1/anchor"
+            fi
+          fi
           export PATH="$HOME/.avm/bin:$PATH"
           echo "Anchor version:"
-          anchor --version
+          # Try to get anchor version - use binary directly if avm wrapper fails
+          if $ANCHOR_CMD --version 2>&1; then
+            echo "Anchor version retrieved successfully"
+          elif [ -f "$HOME/.avm/versions/0.30.1/anchor" ] && [ "$ANCHOR_CMD" != "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            echo "Using Anchor binary directly (avm wrapper not working)"
+            ANCHOR_CMD="$HOME/.avm/versions/0.30.1/anchor"
+            $ANCHOR_CMD --version 2>&1 || echo "Warning: Could not get anchor version"
+          else
+            echo "ERROR: Cannot find anchor binary or get version"
+            exit 1
+          fi
           echo "Running Anchor tests..."
-          anchor test -- --nocapture
+          $ANCHOR_CMD test -- --nocapture
       - name: Generate coverage report
         working-directory: blockchain
         run: |
@@ -286,8 +320,21 @@ jobs:
             ls -la "$HOME/.avm/versions/0.30.1/" 2>&1 || true
             exit 1
           fi
-          # Ensure version is set for anchor commands
-          echo "Anchor CLI ready"
+          # Set anchor version in avm config (required for anchor commands)
+          if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            echo "Setting Anchor version to 0.30.1..."
+            yes | avm use 0.30.1 2>&1 || echo "Note: avm use may have issues, but binary exists"
+          fi
+          # Verify anchor works - try direct binary call if avm wrapper fails
+          export PATH="$HOME/.avm/bin:$PATH"
+          if anchor --version 2>&1; then
+            echo "Anchor CLI ready and verified"
+          elif [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
+            echo "Using Anchor binary directly (avm wrapper not working)"
+            "$HOME/.avm/versions/0.30.1/anchor" --version 2>&1 || echo "Warning: Could not get anchor version"
+          else
+            echo "Warning: anchor --version failed, but continuing..."
+          fi
       - name: Install pnpm
         run: corepack enable
       - name: Backend build

@@ -62,7 +62,6 @@ export const WalletSection = ({ onAuthorityChange }: WalletSectionProps) => {
     // Prevent default wallet adapter dropdown menu from showing
     const preventDefaultDropdown = (event: MouseEvent) => {
       if (publicKey && buttonRef.current?.contains(event.target as Node)) {
-        const target = event.target as HTMLElement;
         // Find and hide any default dropdown menus
         const defaultDropdowns = document.querySelectorAll('[role="menu"]');
         defaultDropdowns.forEach((menu) => {

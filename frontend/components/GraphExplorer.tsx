@@ -1,5 +1,4 @@
 "use client";
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-argument */
 
 import { useState, useRef, useEffect } from "react";
 import dynamic from "next/dynamic";
@@ -157,12 +156,13 @@ const GraphExplorer = () => {
       executeButton.dispatchEvent(clickEvent);
       
       // Also try touch event for mobile
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const touchEvent = new TouchEvent('touchend', {
+      // TouchEvent cannot be constructed directly, but we try for mobile compatibility
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call
+      const touchEvent = new (window as any).TouchEvent('touchend', {
         bubbles: true,
         cancelable: true,
         view: window
-      } as any);
+      });
       executeButton.dispatchEvent(touchEvent);
       return;
     }
