@@ -113,42 +113,46 @@ jobs:
         continue-on-error: false
         run: |
           export PATH="$HOME/.cargo/bin:$HOME/.avm/bin:$PATH"
-          # Find Anchor CLI - prioritize direct binary (doesn't need avm config)
+          # Find Anchor CLI - ONLY use direct binary (avm wrapper causes issues)
           ANCHOR_CMD=""
           DIRECT_BINARY="$HOME/.avm/versions/0.30.1/anchor"
           
           if [ -f "$DIRECT_BINARY" ]; then
             ANCHOR_CMD="$DIRECT_BINARY"
-            echo "Using direct Anchor binary: $DIRECT_BINARY"
-          elif command -v anchor >/dev/null 2>&1; then
-            # Try to set avm version for wrapper
-            if command -v avm >/dev/null 2>&1; then
-              echo "Setting Anchor version with avm use..."
-              yes | avm use 0.30.1 2>&1 || echo "avm use failed"
-            fi
-            ANCHOR_CMD="anchor"
-            echo "Using anchor via PATH/avm wrapper"
+            echo "✓ Using direct Anchor binary: $DIRECT_BINARY"
           elif [ -f "$HOME/.cargo/bin/anchor-cli" ]; then
             ANCHOR_CMD="$HOME/.cargo/bin/anchor-cli"
-            echo "Using anchor-cli from cargo bin"
+            echo "✓ Using anchor-cli from cargo bin"
+          else
+            echo "✗ No working Anchor CLI found (direct binary or cargo-installed)"
+            echo "Skipping Anchor program linting - will lint workspace only"
+            ANCHOR_CMD=""
           fi
           
           # Set environment variable for Anchor macro expansion (required for cargo clippy)
           export ANCHOR_IDL_BUILD_PROGRAM_PATH="$PWD/programs/audit_registry"
           echo "Set ANCHOR_IDL_BUILD_PROGRAM_PATH=$ANCHOR_IDL_BUILD_PROGRAM_PATH"
           
+          ANCHOR_BUILD_SUCCESS=false
           if [ -n "$ANCHOR_CMD" ]; then
             echo "Running anchor build to set up macros..."
-            if $ANCHOR_CMD build 2>&1 | tee /tmp/anchor-build.log | tail -50; then
+            # Capture exit code properly
+            set +e
+            $ANCHOR_CMD build >/tmp/anchor-build.log 2>&1
+            BUILD_EXIT=$?
+            set -e
+            
+            if [ "$BUILD_EXIT" -eq 0 ]; then
               echo "✓ Anchor build succeeded"
               ANCHOR_BUILD_SUCCESS=true
             else
-              echo "✗ Anchor build failed, checking log..."
-              tail -100 /tmp/anchor-build.log || true
+              echo "✗ Anchor build failed (exit code: $BUILD_EXIT)"
+              echo "Last 50 lines of build output:"
+              tail -50 /tmp/anchor-build.log || true
               ANCHOR_BUILD_SUCCESS=false
             fi
           else
-            echo "WARNING: Anchor CLI not found"
+            echo "No Anchor CLI available - skipping anchor build"
             ANCHOR_BUILD_SUCCESS=false
           fi
           
