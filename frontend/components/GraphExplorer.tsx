@@ -157,20 +157,23 @@ const GraphExplorer = () => {
       
       // Also try touch event for mobile
       // TouchEvent cannot be constructed directly, but we try for mobile compatibility
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
         const TouchEventConstructor = (window as any).TouchEvent;
         if (TouchEventConstructor) {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
           const touchEvent = new TouchEventConstructor('touchend', {
             bubbles: true,
             cancelable: true,
             view: window
           });
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
           executeButton.dispatchEvent(touchEvent);
         }
       } catch {
         // TouchEvent not supported, ignore
       }
+      /* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
       return;
     }
     

@@ -118,6 +118,7 @@ jobs:
             echo "Note: cargo install may fail with Rust 1.82.0 due to dependency issues (known Anchor 0.30.1 limitation)"
             # Try cargo install directly (non-blocking, errors suppressed)
             # Note: This may fail due to time crate incompatibility with Rust 1.82.0
+            export PATH="$HOME/.cargo/bin:$PATH"
             cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --locked --force 2>&1 | grep -v "type annotations needed" | grep -v "Box<_" | tail -20 || echo "cargo install fallback failed (non-blocking, will use avm if available)"
             # If cargo install worked, create symlink
             if command -v anchor-cli >/dev/null 2>&1; then
@@ -125,6 +126,11 @@ jobs:
               ln -sfn "$(which anchor-cli)" "$HOME/.avm/bin/anchor"
               chmod +x "$HOME/.avm/bin/anchor"
               echo "Using cargo-installed anchor-cli"
+            elif [ -f "$HOME/.cargo/bin/anchor-cli" ]; then
+              mkdir -p "$HOME/.avm/bin"
+              ln -sfn "$HOME/.cargo/bin/anchor-cli" "$HOME/.avm/bin/anchor"
+              chmod +x "$HOME/.avm/bin/anchor"
+              echo "Using cargo-installed anchor-cli (from explicit path)"
             fi
           fi
           sleep 3
@@ -143,14 +149,15 @@ jobs:
             echo "Using cargo-installed anchor-cli as fallback"
           fi
           # Verify and set version in avm config
-          export PATH="$HOME/.avm/bin:$PATH"
-          if ! command -v anchor >/dev/null 2>&1; then
-            echo "ERROR: Anchor CLI verification failed"
+          export PATH="$HOME/.cargo/bin:$HOME/.avm/bin:$PATH"
+          if ! command -v anchor >/dev/null 2>&1 && ! command -v anchor-cli >/dev/null 2>&1 && [ ! -f "$HOME/.cargo/bin/anchor-cli" ]; then
+            echo "WARNING: Anchor CLI not found after installation"
             echo "Debug info:"
             avm list 2>&1 || true
             ls -la "$HOME/.avm/bin/" 2>&1 || true
             ls -la "$HOME/.avm/versions/0.30.1/" 2>&1 || true
-            exit 1
+            ls -la "$HOME/.cargo/bin/anchor*" 2>&1 || true
+            echo "Note: Will try to find Anchor CLI during test step"
           fi
           # Set anchor version in avm config (required for anchor commands)
           if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
@@ -212,7 +219,20 @@ jobs:
             fi
           fi
           
-          # Priority 3: Fallback to direct binary even if test failed earlier
+          # Priority 3: Try anchor-cli from cargo (if installed during setup)
+          # Check both PATH and explicit cargo bin location
+          export PATH="$HOME/.cargo/bin:$PATH"
+          if [ -z "$ANCHOR_CMD" ]; then
+            if command -v anchor-cli >/dev/null 2>&1; then
+              ANCHOR_CMD="anchor-cli"
+              echo "✓ Using anchor-cli from PATH"
+            elif [ -f "$HOME/.cargo/bin/anchor-cli" ]; then
+              ANCHOR_CMD="$HOME/.cargo/bin/anchor-cli"
+              echo "✓ Using anchor-cli from cargo bin"
+            fi
+          fi
+          
+          # Priority 4: Fallback to direct binary even if test failed earlier
           if [ -z "$ANCHOR_CMD" ] && [ -f "$DIRECT_BINARY" ]; then
             ANCHOR_CMD="$DIRECT_BINARY"
             echo "✓ Fallback: Using direct binary path"
@@ -228,6 +248,8 @@ jobs:
             ls -la "$HOME/.avm/versions/0.30.1/" 2>&1 | head -5 || echo "    Directory does not exist"
             echo "  Checking avm bin:"
             ls -la "$HOME/.avm/bin/" 2>&1 | head -5 || echo "    Directory does not exist"
+            echo "  Checking for anchor-cli:"
+            command -v anchor-cli 2>&1 || echo "    anchor-cli not found"
             echo "  Checking avm versions:"
             avm list 2>&1 | head -10 || echo "    avm command not available"
             exit 1
@@ -307,6 +329,7 @@ jobs:
             echo "Note: cargo install may fail with Rust 1.82.0 due to dependency issues (known Anchor 0.30.1 limitation)"
             # Try cargo install directly (non-blocking, errors suppressed)
             # Note: This may fail due to time crate incompatibility with Rust 1.82.0
+            export PATH="$HOME/.cargo/bin:$PATH"
             cargo install --git https://github.com/coral-xyz/anchor --tag v0.30.1 anchor-cli --locked --force 2>&1 | grep -v "type annotations needed" | grep -v "Box<_" | tail -20 || echo "cargo install fallback failed (non-blocking, will use avm if available)"
             # If cargo install worked, create symlink
             if command -v anchor-cli >/dev/null 2>&1; then
@@ -314,6 +337,11 @@ jobs:
               ln -sfn "$(which anchor-cli)" "$HOME/.avm/bin/anchor"
               chmod +x "$HOME/.avm/bin/anchor"
               echo "Using cargo-installed anchor-cli"
+            elif [ -f "$HOME/.cargo/bin/anchor-cli" ]; then
+              mkdir -p "$HOME/.avm/bin"
+              ln -sfn "$HOME/.cargo/bin/anchor-cli" "$HOME/.avm/bin/anchor"
+              chmod +x "$HOME/.avm/bin/anchor"
+              echo "Using cargo-installed anchor-cli (from explicit path)"
             fi
           fi
           sleep 3
@@ -332,14 +360,15 @@ jobs:
             echo "Using cargo-installed anchor-cli as fallback"
           fi
           # Verify and set version in avm config
-          export PATH="$HOME/.avm/bin:$PATH"
-          if ! command -v anchor >/dev/null 2>&1; then
-            echo "ERROR: Anchor CLI verification failed"
+          export PATH="$HOME/.cargo/bin:$HOME/.avm/bin:$PATH"
+          if ! command -v anchor >/dev/null 2>&1 && ! command -v anchor-cli >/dev/null 2>&1 && [ ! -f "$HOME/.cargo/bin/anchor-cli" ]; then
+            echo "WARNING: Anchor CLI not found after installation"
             echo "Debug info:"
             avm list 2>&1 || true
             ls -la "$HOME/.avm/bin/" 2>&1 || true
             ls -la "$HOME/.avm/versions/0.30.1/" 2>&1 || true
-            exit 1
+            ls -la "$HOME/.cargo/bin/anchor*" 2>&1 || true
+            echo "Note: Will try to find Anchor CLI during test step"
           fi
           # Set anchor version in avm config (required for anchor commands)
           if [ -f "$HOME/.avm/versions/0.30.1/anchor" ]; then
