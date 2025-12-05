@@ -32,6 +32,12 @@ jobs:
       - name: Cargo audit
         working-directory: blockchain
         run: |
+          rm -f Cargo.lock
+          cargo generate-lockfile
+          # Fix dependencies for Rust 1.76.0
+          cargo update -p rayon --precise 1.10.0
+          cargo update -p rayon-core --precise 1.12.1
+          
           cargo install cargo-audit --locked || true
           cargo audit || echo "Warning: cargo audit found issues (non-blocking)"
       - name: npm audit backend
@@ -136,13 +142,16 @@ jobs:
       - name: Anchor test
         working-directory: blockchain
         run: |
-          # FIX: Delete incompatible lockfile
+          # FIX: Reset lockfile
           rm -f Cargo.lock
           
-          # FIX: Pin rayon to 1.10.0. This implicitly uses rayon-core 1.12.x
-          # which is compatible with Rust 1.76.0.
-          # We cannot use rayon 1.11.0 because it requires rayon-core 1.13.0 (Rust 1.80+)
+          # FIX: Generate fresh lockfile
+          cargo generate-lockfile
+          
+          # FIX: Downgrade rayon to 1.10.0 (compatible with Rust 1.76)
+          # This implicitly pulls rayon-core 1.12.1
           cargo update -p rayon --precise 1.10.0
+          cargo update -p rayon-core --precise 1.12.1
           
           echo "Running Anchor tests..."
           # Force refresh of PATH to include Solana
@@ -234,13 +243,12 @@ jobs:
       - name: Blockchain release build
         working-directory: blockchain
         run: |
-          # FIX: Delete incompatible lockfile
+          # FIX: Reset and patch dependencies
           rm -f Cargo.lock
-          
-          # FIX: Pin rayon to 1.10.0 to avoid rayon-core 1.13.0 conflict
+          cargo generate-lockfile
           cargo update -p rayon --precise 1.10.0
+          cargo update -p rayon-core --precise 1.12.1
           
-          # The PATH should be properly set by $GITHUB_PATH in previous steps
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
           anchor build
       - name: Notify CI status webhook
