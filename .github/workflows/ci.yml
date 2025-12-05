@@ -90,8 +90,7 @@ jobs:
           toolchain: 1.76.0
       - name: Install Solana & Anchor CLI
         run: |
-          # 1. Install Solana CLI with retry logic
-          SOLANA_BIN_PATH="$HOME/.local/share/solana/install/active_release/bin"
+          # 1. Install Solana
           echo "Installing Solana CLI..."
           for i in 1 2 3; do
             if sh -c "$(curl -sSfL https://release.solana.com/stable/install 2>/dev/null)"; then
@@ -104,20 +103,31 @@ jobs:
             if [ $i -eq 3 ]; then exit 1; fi
           done
           
-          # Add Solana bin to PATH for the rest of this step
-          export PATH="$SOLANA_BIN_PATH:$PATH"
+          # Dynamic path detection to be safe
+          SOLANA_BIN_PATH="$HOME/.local/share/solana/install/active_release/bin"
+          
+          # Verify the binary actually exists
+          if [ ! -f "$SOLANA_BIN_PATH/solana" ]; then
+             echo "Using fallback path search..."
+             # Fallback: sometimes active_release isn't linked immediately
+             SOLANA_BIN_PATH=$(find "$HOME/.local/share/solana/install" -name "solana" -type f | xargs dirname | head -n 1)
+          fi
+          
+          echo "Solana bin path: $SOLANA_BIN_PATH"
+          echo "$SOLANA_BIN_PATH" >> $GITHUB_PATH
           
           # 2. Install Anchor CLI 0.29.0 DIRECTLY
           echo "Installing Anchor CLI 0.29.0..."
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
           
-          # 3. Source Cargo env and export Solana bin for all future steps
+          # 3. Add Cargo bin to PATH
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-          echo "$SOLANA_BIN_PATH" >> $GITHUB_PATH
           
           # 4. Verify
-          # Use the variable $SOLANA_BIN_PATH to force the correct path for verification
-          "$SOLANA_BIN_PATH/solana" --version
+          # Export for current step immediate usage
+          export PATH="$SOLANA_BIN_PATH:$HOME/.cargo/bin:$PATH"
+          
+          solana --version
           anchor --version
       - name: Install pnpm
         run: corepack enable
@@ -176,8 +186,7 @@ jobs:
           toolchain: 1.76.0
       - name: Install Solana & Anchor CLI
         run: |
-          # 1. Install Solana CLI with retry logic
-          SOLANA_BIN_PATH="$HOME/.local/share/solana/install/active_release/bin"
+          # 1. Install Solana
           echo "Installing Solana CLI..."
           for i in 1 2 3; do
             if sh -c "$(curl -sSfL https://release.solana.com/stable/install 2>/dev/null)"; then
@@ -190,18 +199,31 @@ jobs:
             if [ $i -eq 3 ]; then exit 1; fi
           done
           
-          export PATH="$SOLANA_BIN_PATH:$PATH"
+          # Dynamic path detection to be safe
+          SOLANA_BIN_PATH="$HOME/.local/share/solana/install/active_release/bin"
+          
+          # Verify the binary actually exists
+          if [ ! -f "$SOLANA_BIN_PATH/solana" ]; then
+             echo "Using fallback path search..."
+             # Fallback: sometimes active_release isn't linked immediately
+             SOLANA_BIN_PATH=$(find "$HOME/.local/share/solana/install" -name "solana" -type f | xargs dirname | head -n 1)
+          fi
+          
+          echo "Solana bin path: $SOLANA_BIN_PATH"
+          echo "$SOLANA_BIN_PATH" >> $GITHUB_PATH
           
           # 2. Install Anchor CLI 0.29.0 DIRECTLY
           echo "Installing Anchor CLI 0.29.0..."
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
           
-          # 3. Source Cargo env and export Solana bin for all future steps
+          # 3. Add Cargo bin to PATH
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-          echo "$SOLANA_BIN_PATH" >> $GITHUB_PATH
           
           # 4. Verify
-          "$SOLANA_BIN_PATH/solana" --version
+          # Export for current step immediate usage
+          export PATH="$SOLANA_BIN_PATH:$HOME/.cargo/bin:$PATH"
+          
+          solana --version
           anchor --version
       - name: Install pnpm
         run: corepack enable
