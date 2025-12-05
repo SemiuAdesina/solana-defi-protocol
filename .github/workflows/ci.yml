@@ -141,7 +141,11 @@ jobs:
           # FIX: Delete incompatible lockfile so 1.76.0 can regenerate it
           rm -f Cargo.lock
           
+          # FIX: Pin rayon-core to version compatible with Rust 1.76.0
+          cargo update -p rayon-core --precise 1.12.1
+          
           echo "Running Anchor tests..."
+          # The PATH should be properly set by $GITHUB_PATH in previous steps
           anchor test
       - name: Generate coverage report
         working-directory: blockchain
@@ -232,6 +236,10 @@ jobs:
           # FIX: Delete incompatible lockfile so 1.76.0 can regenerate it
           rm -f Cargo.lock
           
+          # FIX: Pin rayon-core to version compatible with Rust 1.76.0
+          cargo update -p rayon-core --precise 1.12.1
+          
+          # The PATH should be properly set by $GITHUB_PATH in previous steps
           anchor build
       - name: Notify CI status webhook
         if: always()
