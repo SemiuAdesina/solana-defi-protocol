@@ -91,6 +91,7 @@ jobs:
       - name: Install Solana & Anchor CLI
         run: |
           # 1. Install Solana CLI with retry logic
+          SOLANA_BIN_PATH="$HOME/.local/share/solana/install/active_release/bin"
           echo "Installing Solana CLI..."
           for i in 1 2 3; do
             if sh -c "$(curl -sSfL https://release.solana.com/stable/install 2>/dev/null)"; then
@@ -102,20 +103,22 @@ jobs:
             fi
             if [ $i -eq 3 ]; then exit 1; fi
           done
-          # Add to PATH immediately for this step and GITHUB_PATH for future steps
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          
+          # Add Solana bin to PATH for the rest of this step
+          export PATH="$SOLANA_BIN_PATH:$PATH"
           
           # 2. Install Anchor CLI 0.29.0 DIRECTLY
           echo "Installing Anchor CLI 0.29.0..."
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
           
-          # 3. Add Cargo bin to PATH
+          # 3. Source Cargo env and export Solana bin for all future steps
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$SOLANA_BIN_PATH" >> $GITHUB_PATH
           
           # 4. Verify
+          # Use the variable $SOLANA_BIN_PATH to force the correct path for verification
+          "$SOLANA_BIN_PATH/solana" --version
           anchor --version
-          solana --version
       - name: Install pnpm
         run: corepack enable
       - name: Backend test
@@ -132,8 +135,7 @@ jobs:
         working-directory: blockchain
         run: |
           echo "Running Anchor tests..."
-          # Ensure cargo-build-bpf is available by refreshing PATH
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
+          # The PATH should be properly set by $GITHUB_PATH in previous steps
           anchor test -- --nocapture
       - name: Generate coverage report
         working-directory: blockchain
@@ -175,6 +177,7 @@ jobs:
       - name: Install Solana & Anchor CLI
         run: |
           # 1. Install Solana CLI with retry logic
+          SOLANA_BIN_PATH="$HOME/.local/share/solana/install/active_release/bin"
           echo "Installing Solana CLI..."
           for i in 1 2 3; do
             if sh -c "$(curl -sSfL https://release.solana.com/stable/install 2>/dev/null)"; then
@@ -186,17 +189,19 @@ jobs:
             fi
             if [ $i -eq 3 ]; then exit 1; fi
           done
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
-          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          
+          export PATH="$SOLANA_BIN_PATH:$PATH"
           
           # 2. Install Anchor CLI 0.29.0 DIRECTLY
           echo "Installing Anchor CLI 0.29.0..."
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
           
-          # 3. Add Cargo bin to PATH
+          # 3. Source Cargo env and export Solana bin for all future steps
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          echo "$SOLANA_BIN_PATH" >> $GITHUB_PATH
           
           # 4. Verify
+          "$SOLANA_BIN_PATH/solana" --version
           anchor --version
       - name: Install pnpm
         run: corepack enable
@@ -213,8 +218,7 @@ jobs:
       - name: Blockchain release build
         working-directory: blockchain
         run: |
-          # FIX: Removed --release flag (not supported/needed by anchor build)
-          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
+          # The PATH should be properly set by $GITHUB_PATH in previous steps
           anchor build
       - name: Notify CI status webhook
         if: always()
