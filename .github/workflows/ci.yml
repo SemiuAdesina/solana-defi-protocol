@@ -90,43 +90,35 @@ jobs:
           toolchain: 1.76.0
       - name: Install Solana & Anchor CLI
         run: |
-          # 1. Install Solana
-          echo "Installing Solana CLI..."
-          for i in 1 2 3; do
-            if sh -c "$(curl -sSfL https://release.solana.com/stable/install 2>/dev/null)"; then
-              echo "✓ Solana CLI installed (attempt $i)"
-              break
-            else
-              echo "✗ Retrying Solana install..."
-              sleep 5
-            fi
-            if [ $i -eq 3 ]; then exit 1; fi
-          done
+          # 1. Install Solana (Deterministic Install)
+          # We download the tarball directly to avoid flaky installer scripts
+          SOLANA_VER="v1.17.15"
+          echo "Downloading Solana $SOLANA_VER..."
+          wget -q "https://github.com/solana-labs/solana/releases/download/$SOLANA_VER/solana-release-x86_64-unknown-linux-gnu.tar.bz2"
+          tar jxf solana-release-x86_64-unknown-linux-gnu.tar.bz2
           
-          # Dynamic path detection to be safe
-          SOLANA_BIN_PATH="$HOME/.local/share/solana/install/active_release/bin"
+          # Move to a deterministic location
+          mkdir -p $HOME/.local/share/solana/install
+          rm -rf $HOME/.local/share/solana/install/active_release
+          mv solana-release $HOME/.local/share/solana/install/active_release
           
-          # Verify the binary actually exists
-          if [ ! -f "$SOLANA_BIN_PATH/solana" ]; then
-             echo "Using fallback path search..."
-             # Fallback: sometimes active_release isn't linked immediately
-             SOLANA_BIN_PATH=$(find "$HOME/.local/share/solana/install" -name "solana" -type f | xargs dirname | head -n 1)
-          fi
+          # Set Path Variables
+          SOLANA_PATH="$HOME/.local/share/solana/install/active_release/bin"
+          echo "Solana installed at: $SOLANA_PATH"
           
-          echo "Solana bin path: $SOLANA_BIN_PATH"
-          echo "$SOLANA_BIN_PATH" >> $GITHUB_PATH
+          # Update Paths
+          echo "$SOLANA_PATH" >> $GITHUB_PATH
+          export PATH="$SOLANA_PATH:$PATH"
           
-          # 2. Install Anchor CLI 0.29.0 DIRECTLY
+          # 2. Install Anchor CLI 0.29.0
           echo "Installing Anchor CLI 0.29.0..."
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
           
-          # 3. Add Cargo bin to PATH
+          # 3. Update Paths for Cargo
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.cargo/bin:$PATH"
           
           # 4. Verify
-          # Export for current step immediate usage
-          export PATH="$SOLANA_BIN_PATH:$HOME/.cargo/bin:$PATH"
-          
           solana --version
           anchor --version
       - name: Install pnpm
@@ -186,43 +178,34 @@ jobs:
           toolchain: 1.76.0
       - name: Install Solana & Anchor CLI
         run: |
-          # 1. Install Solana
-          echo "Installing Solana CLI..."
-          for i in 1 2 3; do
-            if sh -c "$(curl -sSfL https://release.solana.com/stable/install 2>/dev/null)"; then
-              echo "✓ Solana CLI installed (attempt $i)"
-              break
-            else
-              echo "✗ Retrying Solana install..."
-              sleep 5
-            fi
-            if [ $i -eq 3 ]; then exit 1; fi
-          done
+          # 1. Install Solana (Deterministic Install)
+          SOLANA_VER="v1.17.15"
+          echo "Downloading Solana $SOLANA_VER..."
+          wget -q "https://github.com/solana-labs/solana/releases/download/$SOLANA_VER/solana-release-x86_64-unknown-linux-gnu.tar.bz2"
+          tar jxf solana-release-x86_64-unknown-linux-gnu.tar.bz2
           
-          # Dynamic path detection to be safe
-          SOLANA_BIN_PATH="$HOME/.local/share/solana/install/active_release/bin"
+          # Move to a deterministic location
+          mkdir -p $HOME/.local/share/solana/install
+          rm -rf $HOME/.local/share/solana/install/active_release
+          mv solana-release $HOME/.local/share/solana/install/active_release
           
-          # Verify the binary actually exists
-          if [ ! -f "$SOLANA_BIN_PATH/solana" ]; then
-             echo "Using fallback path search..."
-             # Fallback: sometimes active_release isn't linked immediately
-             SOLANA_BIN_PATH=$(find "$HOME/.local/share/solana/install" -name "solana" -type f | xargs dirname | head -n 1)
-          fi
+          # Set Path Variables
+          SOLANA_PATH="$HOME/.local/share/solana/install/active_release/bin"
+          echo "Solana installed at: $SOLANA_PATH"
           
-          echo "Solana bin path: $SOLANA_BIN_PATH"
-          echo "$SOLANA_BIN_PATH" >> $GITHUB_PATH
+          # Update Paths
+          echo "$SOLANA_PATH" >> $GITHUB_PATH
+          export PATH="$SOLANA_PATH:$PATH"
           
-          # 2. Install Anchor CLI 0.29.0 DIRECTLY
+          # 2. Install Anchor CLI 0.29.0
           echo "Installing Anchor CLI 0.29.0..."
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
           
-          # 3. Add Cargo bin to PATH
+          # 3. Update Paths for Cargo
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.cargo/bin:$PATH"
           
           # 4. Verify
-          # Export for current step immediate usage
-          export PATH="$SOLANA_BIN_PATH:$HOME/.cargo/bin:$PATH"
-          
           solana --version
           anchor --version
       - name: Install pnpm
