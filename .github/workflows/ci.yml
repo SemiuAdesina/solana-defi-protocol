@@ -32,8 +32,6 @@ jobs:
       - name: Cargo audit
         working-directory: blockchain
         run: |
-          # Regenerate lockfile for 1.76.0 compatibility
-          rm -f Cargo.lock
           cargo install cargo-audit --locked || true
           cargo audit || echo "Warning: cargo audit found issues (non-blocking)"
       - name: npm audit backend
@@ -138,15 +136,18 @@ jobs:
       - name: Anchor test
         working-directory: blockchain
         run: |
-          # FIX: Delete incompatible lockfile so 1.76.0 can regenerate it
+          # FIX: Delete incompatible lockfile
           rm -f Cargo.lock
           
-          # FIX: Pin rayon-core to version compatible with Rust 1.76.0
-          cargo update -p rayon-core --precise 1.12.1
+          # FIX: Pin rayon to 1.10.0. This implicitly uses rayon-core 1.12.x
+          # which is compatible with Rust 1.76.0.
+          # We cannot use rayon 1.11.0 because it requires rayon-core 1.13.0 (Rust 1.80+)
+          cargo update -p rayon --precise 1.10.0
           
           echo "Running Anchor tests..."
-          # The PATH should be properly set by $GITHUB_PATH in previous steps
-          anchor test
+          # Force refresh of PATH to include Solana
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
+          anchor test -- --nocapture
       - name: Generate coverage report
         working-directory: blockchain
         run: |
@@ -233,13 +234,14 @@ jobs:
       - name: Blockchain release build
         working-directory: blockchain
         run: |
-          # FIX: Delete incompatible lockfile so 1.76.0 can regenerate it
+          # FIX: Delete incompatible lockfile
           rm -f Cargo.lock
           
-          # FIX: Pin rayon-core to version compatible with Rust 1.76.0
-          cargo update -p rayon-core --precise 1.12.1
+          # FIX: Pin rayon to 1.10.0 to avoid rayon-core 1.13.0 conflict
+          cargo update -p rayon --precise 1.10.0
           
           # The PATH should be properly set by $GITHUB_PATH in previous steps
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
           anchor build
       - name: Notify CI status webhook
         if: always()

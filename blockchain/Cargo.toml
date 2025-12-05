@@ -13,4 +13,7 @@ overflow-checks = true
 
 [patch.crates-io]
 anchor-syn = { path = "../vendor/anchor-syn" }
+# Pin rayon and rayon-core to versions compatible with Rust 1.76.0
+rayon = { version = "=1.10.0" }
+rayon-core = { version = "=1.12.1" }
 
