@@ -32,6 +32,8 @@ jobs:
       - name: Cargo audit
         working-directory: blockchain
         run: |
+          # Regenerate lockfile for 1.76.0 compatibility
+          rm -f Cargo.lock
           cargo install cargo-audit --locked || true
           cargo audit || echo "Warning: cargo audit found issues (non-blocking)"
       - name: npm audit backend
@@ -136,12 +138,16 @@ jobs:
       - name: Anchor test
         working-directory: blockchain
         run: |
+          # FIX: Delete incompatible lockfile so 1.76.0 can regenerate it
+          rm -f Cargo.lock
+          
           echo "Running Anchor tests..."
-          # The PATH should be properly set by $GITHUB_PATH in previous steps
-          anchor test -- --nocapture
+          anchor test
       - name: Generate coverage report
         working-directory: blockchain
         run: |
+          # Re-export path for cargo-llvm-cov
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
           cargo install cargo-llvm-cov --locked
           cargo llvm-cov --locked --all-features --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
@@ -223,7 +229,9 @@ jobs:
       - name: Blockchain release build
         working-directory: blockchain
         run: |
-          # The PATH should be properly set by $GITHUB_PATH in previous steps
+          # FIX: Delete incompatible lockfile so 1.76.0 can regenerate it
+          rm -f Cargo.lock
+          
           anchor build
       - name: Notify CI status webhook
         if: always()
