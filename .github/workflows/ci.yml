@@ -19,7 +19,7 @@ jobs:
           node-version: 20
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.82.0
+          toolchain: 1.78.0
           components: clippy
       - name: Install pnpm
         run: corepack enable
@@ -52,7 +52,7 @@ jobs:
           node-version: 20
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.82.0
+          toolchain: 1.78.0
           components: clippy, rustfmt
       - name: Install pnpm
         run: corepack enable
@@ -87,11 +87,24 @@ jobs:
           node-version: 20
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.82.0
+          toolchain: 1.78.0
       - name: Install Solana & Anchor CLI
         run: |
-          # Install Solana CLI
-          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+          # Install Solana CLI with retry logic
+          echo "Installing Solana CLI..."
+          for i in 1 2 3; do
+            if sh -c "$(curl -sSfL https://release.solana.com/stable/install)"; then
+              echo "✓ Solana CLI installed successfully (attempt $i)"
+              break
+            else
+              echo "✗ Solana CLI installation failed (attempt $i/3)"
+              if [ $i -eq 3 ]; then
+                echo "❌ Failed to install Solana CLI after 3 attempts."
+                exit 1
+              fi
+              sleep 5
+            fi
+          done
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           
           # 1. Install AVM and add to PATH
@@ -186,11 +199,24 @@ jobs:
           node-version: 20
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         with:
-          toolchain: 1.82.0
+          toolchain: 1.78.0
       - name: Install Solana & Anchor CLI
         run: |
-          # Install Solana CLI
-          sh -c "$(curl -sSfL https://release.solana.com/stable/install)"
+          # Install Solana CLI with retry logic
+          echo "Installing Solana CLI..."
+          for i in 1 2 3; do
+            if sh -c "$(curl -sSfL https://release.solana.com/stable/install)"; then
+              echo "✓ Solana CLI installed successfully (attempt $i)"
+              break
+            else
+              echo "✗ Solana CLI installation failed (attempt $i/3)"
+              if [ $i -eq 3 ]; then
+                echo "❌ Failed to install Solana CLI after 3 attempts."
+                exit 1
+              fi
+              sleep 5
+            fi
+          done
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           
           # 1. Install AVM and add to PATH
