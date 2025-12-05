@@ -156,7 +156,9 @@ jobs:
           echo "Running Anchor tests..."
           # Force refresh of PATH to include Solana
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
-          anchor test -- --nocapture
+          
+          # FIX: Removed -- --nocapture to avoid confusing the build command
+          anchor test
       - name: Generate coverage report
         working-directory: blockchain
         run: |
