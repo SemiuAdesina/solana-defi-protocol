@@ -2,14 +2,14 @@
 
 This document explains how to configure the CD workflow for automatic deployment after CI passes.
 
-## ⚠️ CRITICAL: Program ID Preservation
+## CRITICAL: Program ID Preservation
 
 **Before deploying, you MUST save your Program Keypair!**
 
 Without the `SOLANA_PROGRAM_KEYPAIR` secret, Anchor will generate a **new Program ID on every deployment**, which will:
-- ❌ Break your frontend (it has a hardcoded Program ID)
-- ❌ Lose all on-chain state (data is tied to the Program ID)
-- ❌ Require updating configurations after every deployment
+- Break your frontend (it has a hardcoded Program ID)
+- Lose all on-chain state (data is tied to the Program ID)
+- Require updating configurations after every deployment
 
 **Quick Fix:**
 1. Export your program keypair: `cat blockchain/target/deploy/audit_registry-keypair.json | base64`
@@ -49,7 +49,7 @@ The CD workflow runs automatically when:
   ```
 - **Funding**: Make sure this wallet has at least 2 SOL on Devnet
   - Get free SOL from: https://faucet.solana.com/
-- **Security**: ⚠️ Never commit this keypair file to the repository!
+- **Security**: Never commit this keypair file to the repository!
 
 #### `SOLANA_PROGRAM_KEYPAIR` (CRITICAL - Required to preserve Program ID)
 - **Description**: Base64-encoded program keypair that determines your Program ID
@@ -69,7 +69,7 @@ The CD workflow runs automatically when:
   [Convert]::ToBase64String([IO.File]::ReadAllBytes("target/deploy/audit_registry-keypair.json"))
   ```
 - **Important**: 
-  - ⚠️ **Save this keypair BEFORE your first deployment!**
+  - **Save this keypair BEFORE your first deployment!**
   - If you've already deployed, find your existing program keypair
   - The Program ID is derived from this keypair: `solana address -k target/deploy/audit_registry-keypair.json`
   - This keypair file should already exist in `blockchain/target/deploy/` after building locally
@@ -118,7 +118,7 @@ Choose ONE of the following platforms:
 
 ### Step 1: Save Your Program Keypair (CRITICAL!)
 
-**⚠️ DO THIS FIRST!** Without your program keypair, every deployment will generate a new Program ID, breaking your frontend.
+**DO THIS FIRST!** Without your program keypair, every deployment will generate a new Program ID, breaking your frontend.
 
 ```bash
 # Navigate to blockchain directory

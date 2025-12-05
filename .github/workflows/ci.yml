@@ -207,7 +207,7 @@ jobs:
           echo "Parsed Line Coverage: ${coverage}%"
           
           if [ -z "$coverage" ]; then
-            echo "❌ ERROR: Could not parse coverage percentage from output."
+            echo "ERROR: Could not parse coverage percentage from output."
             exit 1
           fi
           
@@ -218,9 +218,9 @@ jobs:
           is_passing=$(echo "$coverage" | awk -v t="$THRESHOLD" '{if ($1 >= t) print 1; else print 0}')
           
           if [ "$is_passing" -eq 1 ]; then
-            echo "✅ Coverage check passed: ${coverage}% (Threshold: ${THRESHOLD}%)"
+            echo "Coverage check passed: ${coverage}% (Threshold: ${THRESHOLD}%)"
           else
-            echo "❌ ERROR: Coverage ${coverage}% is below ${THRESHOLD}% threshold"
+            echo "ERROR: Coverage ${coverage}% is below ${THRESHOLD}% threshold"
             exit 1
           fi
 
@@ -300,12 +300,12 @@ jobs:
           
           echo "Status: ${status}"
           if [ -z "${API_KEY}" ]; then
-            echo "❌ ERROR: CI_WEBHOOK_API_KEY secret is not set!"
+            echo "ERROR: CI_WEBHOOK_API_KEY secret is not set!"
             exit 0
           fi
           
           if [ "${BACKEND_URL_FINAL}" == "http://localhost:4000" ]; then
-            echo "⚠️  WARNING: BACKEND_URL is localhost (unreachable)!"
+            echo "WARNING: BACKEND_URL is localhost (unreachable)!"
             exit 0
           fi
           

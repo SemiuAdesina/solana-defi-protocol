@@ -60,7 +60,7 @@ jobs:
           # 1. Setup Deployer Wallet (The one paying for gas)
           # Expects BASE64 encoded keypair in secrets
           if [ -z "${{ secrets.SOLANA_DEPLOYER_KEYPAIR }}" ]; then
-            echo "❌ Error: SOLANA_DEPLOYER_KEYPAIR secret is missing"
+            echo "ERROR: SOLANA_DEPLOYER_KEYPAIR secret is missing"
             echo "See docs/CD_SETUP.md for setup instructions"
             exit 1
           fi
@@ -70,14 +70,14 @@ jobs:
           # 2. Setup Program Keypair (To ensure Program ID stays the same)
           # Expects BASE64 encoded keypair in secrets
           if [ -n "${{ secrets.SOLANA_PROGRAM_KEYPAIR }}" ]; then
-            echo "✅ Injecting persistent Program Keypair..."
+            echo "Injecting persistent Program Keypair..."
             echo "${{ secrets.SOLANA_PROGRAM_KEYPAIR }}" | base64 -d > blockchain/target/deploy/audit_registry-keypair.json
             chmod 600 blockchain/target/deploy/audit_registry-keypair.json
             echo "Program ID will remain: $(solana address -k blockchain/target/deploy/audit_registry-keypair.json 2>/dev/null || echo 'N/A')"
           else
-            echo "⚠️  WARNING: SOLANA_PROGRAM_KEYPAIR secret not found. A new Program ID will be generated."
-            echo "⚠️  This will break your frontend and lose on-chain state!"
-            echo "⚠️  See docs/CD_SETUP.md for instructions to save your Program Keypair"
+            echo "WARNING: SOLANA_PROGRAM_KEYPAIR secret not found. A new Program ID will be generated."
+            echo "WARNING: This will break your frontend and lose on-chain state!"
+            echo "WARNING: See docs/CD_SETUP.md for instructions to save your Program Keypair"
           fi
           
           # Configure Solana
@@ -91,7 +91,7 @@ jobs:
           # 2 SOL limit check
           MIN_BALANCE=2000000000 
           if [ "$BALANCE" -lt "$MIN_BALANCE" ]; then
-            echo "❌ Error: Insufficient balance. Need > 2 SOL."
+            echo "ERROR: Insufficient balance. Need > 2 SOL."
             echo "Airdrop SOL from: https://faucet.solana.com/"
             exit 1
           fi
@@ -119,7 +119,7 @@ jobs:
           
           # 4. Output Info
           PROGRAM_ID=$(solana address -k target/deploy/audit_registry-keypair.json)
-          echo "🎉 Deployment Successful!"
+          echo "Deployment Successful!"
           echo "Program ID: $PROGRAM_ID"
           echo "Explorer URL: https://explorer.solana.com/address/$PROGRAM_ID?cluster=devnet"
           echo "::notice title=Blockchain Deployed::Program ID: $PROGRAM_ID"
@@ -144,9 +144,9 @@ jobs:
           echo "Building backend Docker image..."
           docker build -t backend:latest .
           docker images backend:latest
-          echo "📦 Backend Docker image built successfully"
-          echo "🔧 Configure deployment platform secrets to enable auto-deployment"
-          echo "📖 See docs/CD_SETUP.md for setup instructions"
+          echo "Backend Docker image built successfully"
+          echo "Configure deployment platform secrets to enable auto-deployment"
+          echo "See docs/CD_SETUP.md for setup instructions"
 
   deploy-frontend:
     name: Deploy Frontend
@@ -168,9 +168,9 @@ jobs:
           echo "Building frontend..."
           pnpm install
           pnpm build
-          echo "📦 Frontend build completed"
-          echo "🔧 Configure deployment platform secrets to enable auto-deployment"
-          echo "📖 See docs/CD_SETUP.md for setup instructions"
+          echo "Frontend build completed"
+          echo "Configure deployment platform secrets to enable auto-deployment"
+          echo "See docs/CD_SETUP.md for setup instructions"
 
   notify:
     name: Notify Status
@@ -188,10 +188,10 @@ jobs:
              [ "${{ needs.deploy-backend.result }}" == "success" ] && \
              [ "${{ needs.deploy-frontend.result }}" == "success" ]; then
             status="success"
-            message="🚀 All deployments completed successfully!"
+            message="All deployments completed successfully!"
           else
             status="failed"
-            message="❌ Deployment failed. Check workflow logs for details."
+            message="Deployment failed. Check workflow logs for details."
           fi
           
           BACKEND_URL_FINAL="${BACKEND_URL:-http://localhost:4000}"
@@ -200,12 +200,12 @@ jobs:
           echo "$message"
           
           if [ -z "${API_KEY}" ]; then
-            echo "⚠️  CI_WEBHOOK_API_KEY not set, skipping notification"
+            echo "WARNING: CI_WEBHOOK_API_KEY not set, skipping notification"
             exit 0
           fi
           
           if [ "${BACKEND_URL_FINAL}" == "http://localhost:4000" ]; then
-            echo "⚠️  BACKEND_URL is localhost, skipping notification"
+            echo "WARNING: BACKEND_URL is localhost, skipping notification"
             exit 0
           fi
           
@@ -219,4 +219,4 @@ jobs:
               \"runId\": \"run-${{ github.run_id }}\",
               \"triggeredBy\": \"${{ github.actor }}\",
               \"message\": \"${message}\"
-            }" || echo "⚠️  Failed to send notification"
+            }" || echo "WARNING: Failed to send notification"
