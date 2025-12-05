@@ -9,7 +9,7 @@ crate-type = ["cdylib", "lib"]
 
 [dependencies]
 anchor-lang = { workspace = true }
-solana-program = "=1.18.26"
+solana-program = "=1.17.15"
 
 [features]
 no-entrypoint = []
