@@ -160,10 +160,8 @@ jobs:
           solana config set --keypair $HOME/.config/solana/id.json
           solana config set --url localhost
           
-          # Ensure we test on localnet, not devnet
           if [ -f Anchor.toml ]; then
-            sed -i 's/cluster = "Devnet"/cluster = "Localnet"/g' Anchor.toml
-            echo "Switched Anchor.toml to localnet"
+            sed -i 's/cluster = "devnet"/cluster = "localnet"/g' Anchor.toml
           fi
           
           echo "Running Anchor tests..."
@@ -190,17 +188,41 @@ jobs:
       - name: Check coverage threshold
         working-directory: blockchain
         run: |
-          # Extract coverage percentage from cargo llvm-cov output
-          coverage_output=$(cargo llvm-cov --locked --all-features --workspace --summary-only 2>&1 || echo "")
-          coverage=$(echo "$coverage_output" | grep -E "Total.*[0-9]+\.[0-9]+%" | sed -E 's/.*Total.*([0-9]+\.[0-9]+)%.*/\1/' | head -1 || echo "0")
-          echo "Coverage: ${coverage}%"
-          # Convert to integer for comparison (multiply by 100)
-          coverage_int=$(echo "$coverage" | awk '{printf "%.0f", $1 * 1}')
-          if [ -z "$coverage_int" ] || [ "$coverage_int" -lt 80 ]; then
-            echo "ERROR: Coverage ${coverage}% is below 80% threshold"
+          # Force no colors to make text parsing reliable
+          export CARGO_TERM_COLOR=never
+          
+          echo "Generating summary..."
+          # Capture output
+          coverage_output=$(cargo llvm-cov --locked --all-features --workspace --summary-only 2>&1)
+          
+          # Print for debugging in CI logs
+          echo "--- Raw Coverage Output ---"
+          echo "$coverage_output"
+          echo "---------------------------"
+          
+          # Robust Parsing:
+          # 1. Grep for the line containing "Total" (case insensitive)
+          # 2. Use awk to grab the LAST column ($NF), which is line coverage %
+          # 3. Use tr to remove the '%' sign
+          coverage=$(echo "$coverage_output" | grep -i "Total" | awk '{print $NF}' | tr -d '%')
+          
+          echo "Parsed Coverage: ${coverage}%"
+          
+          # Sanity check: is coverage empty?
+          if [ -z "$coverage" ]; then
+            echo "❌ ERROR: Could not parse coverage percentage from output."
             exit 1
           fi
-          echo "Coverage check passed: ${coverage}%"
+          
+          # Float to Int comparison using awk
+          is_passing=$(echo "$coverage" | awk '{if ($1 >= 80) print 1; else print 0}')
+          
+          if [ "$is_passing" -eq 1 ]; then
+            echo "✅ Coverage check passed: ${coverage}%"
+          else
+            echo "❌ ERROR: Coverage ${coverage}% is below 80% threshold"
+            exit 1
+          fi
 
   build:
     runs-on: ubuntu-latest
