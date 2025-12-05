@@ -90,40 +90,31 @@ jobs:
           toolchain: 1.76.0
       - name: Install Solana & Anchor CLI
         run: |
-          # Install Solana CLI with retry logic (Suppressing curl error output)
+          # 1. Install Solana CLI with retry logic
           echo "Installing Solana CLI..."
           for i in 1 2 3; do
-            # We suppress the error output (2>/dev/null) to clean up the log
             if sh -c "$(curl -sSfL https://release.solana.com/stable/install 2>/dev/null)"; then
-              echo "✓ Solana CLI installed successfully (attempt $i)"
+              echo "✓ Solana CLI installed (attempt $i)"
               break
             else
-              echo "✗ Solana CLI installation failed (attempt $i/3)"
-              if [ $i -eq 3 ]; then
-                echo "❌ Failed to install Solana CLI after 3 attempts."
-                exit 1
-              fi
+              echo "✗ Retrying Solana install..."
               sleep 5
             fi
+            if [ $i -eq 3 ]; then exit 1; fi
           done
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           
-          # 1. Install AVM from a known stable tag
-          echo "Installing AVM v0.32.0..."
-          cargo install --git https://github.com/coral-xyz/anchor --tag v0.32.0 avm --locked --force
-          export PATH="$HOME/.avm/bin:$PATH"
-          echo "$HOME/.avm/bin" >> $GITHUB_PATH
-
-          # 2. Clean and install Anchor 0.29.0
-          rm -rf "$HOME/.avm/versions/0.29.0" 2>/dev/null || true
-          echo "Installing Anchor 0.29.0 via avm..."
-          yes | avm install 0.29.0 2>&1 || { echo "❌ Failed to install Anchor 0.29.0 via AVM. Check version compatibility."; exit 1; }
-
-          # 3. Activate and Verify
-          echo "Activating Anchor 0.29.0..."
-          yes | avm use 0.29.0 2>&1 || echo "Note: avm use may have issues, but binary should exist."
-          export PATH="$HOME/.avm/bin:$PATH"
-          anchor --version || { echo "❌ ERROR: Anchor CLI failed verification."; exit 1; }
+          # 2. Install Anchor CLI 0.29.0 DIRECTLY (Bypassing AVM)
+          # We use --locked to ensure we use the exact dependencies from the 0.29.0 release
+          # preventing newer incompatible crates from breaking the build.
+          echo "Installing Anchor CLI 0.29.0..."
+          cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
+          
+          # 3. Add Cargo bin to PATH (where anchor-cli is installed)
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          
+          # 4. Verify
+          $HOME/.cargo/bin/anchor --version
       - name: Install pnpm
         run: corepack enable
       - name: Backend test
@@ -181,40 +172,29 @@ jobs:
           toolchain: 1.76.0
       - name: Install Solana & Anchor CLI
         run: |
-          # Install Solana CLI with retry logic (Suppressing curl error output)
+          # 1. Install Solana CLI with retry logic
           echo "Installing Solana CLI..."
           for i in 1 2 3; do
-            # We suppress the error output (2>/dev/null) to clean up the log
             if sh -c "$(curl -sSfL https://release.solana.com/stable/install 2>/dev/null)"; then
-              echo "✓ Solana CLI installed successfully (attempt $i)"
+              echo "✓ Solana CLI installed (attempt $i)"
               break
             else
-              echo "✗ Solana CLI installation failed (attempt $i/3)"
-              if [ $i -eq 3 ]; then
-                echo "❌ Failed to install Solana CLI after 3 attempts."
-                exit 1
-              fi
+              echo "✗ Retrying Solana install..."
               sleep 5
             fi
+            if [ $i -eq 3 ]; then exit 1; fi
           done
           echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           
-          # 1. Install AVM from a known stable tag
-          echo "Installing AVM v0.32.0..."
-          cargo install --git https://github.com/coral-xyz/anchor --tag v0.32.0 avm --locked --force
-          export PATH="$HOME/.avm/bin:$PATH"
-          echo "$HOME/.avm/bin" >> $GITHUB_PATH
-
-          # 2. Clean and install Anchor 0.29.0
-          rm -rf "$HOME/.avm/versions/0.29.0" 2>/dev/null || true
-          echo "Installing Anchor 0.29.0 via avm..."
-          yes | avm install 0.29.0 2>&1 || { echo "❌ Failed to install Anchor 0.29.0 via AVM. Check version compatibility."; exit 1; }
-
-          # 3. Activate and Verify
-          echo "Activating Anchor 0.29.0..."
-          yes | avm use 0.29.0 2>&1 || echo "Note: avm use may have issues, but binary should exist."
-          export PATH="$HOME/.avm/bin:$PATH"
-          anchor --version || { echo "❌ ERROR: Anchor CLI failed verification."; exit 1; }
+          # 2. Install Anchor CLI 0.29.0 DIRECTLY (Bypassing AVM)
+          echo "Installing Anchor CLI 0.29.0..."
+          cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
+          
+          # 3. Add Cargo bin to PATH
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          
+          # 4. Verify
+          $HOME/.cargo/bin/anchor --version
       - name: Install pnpm
         run: corepack enable
       - name: Backend build
