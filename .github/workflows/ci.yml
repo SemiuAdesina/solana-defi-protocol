@@ -102,19 +102,20 @@ jobs:
             fi
             if [ $i -eq 3 ]; then exit 1; fi
           done
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          # Add to PATH immediately for this step and GITHUB_PATH for future steps
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           
-          # 2. Install Anchor CLI 0.29.0 DIRECTLY (Bypassing AVM)
-          # We use --locked to ensure we use the exact dependencies from the 0.29.0 release
-          # preventing newer incompatible crates from breaking the build.
+          # 2. Install Anchor CLI 0.29.0 DIRECTLY
           echo "Installing Anchor CLI 0.29.0..."
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
           
-          # 3. Add Cargo bin to PATH (where anchor-cli is installed)
+          # 3. Add Cargo bin to PATH
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           
           # 4. Verify
-          $HOME/.cargo/bin/anchor --version
+          anchor --version
+          solana --version
       - name: Install pnpm
         run: corepack enable
       - name: Backend test
@@ -131,7 +132,8 @@ jobs:
         working-directory: blockchain
         run: |
           echo "Running Anchor tests..."
-          # The previous step guarantees 'anchor' is on the path or exits
+          # Ensure cargo-build-bpf is available by refreshing PATH
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
           anchor test -- --nocapture
       - name: Generate coverage report
         working-directory: blockchain
@@ -184,9 +186,10 @@ jobs:
             fi
             if [ $i -eq 3 ]; then exit 1; fi
           done
-          echo "$HOME/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$PATH"
+          echo "/home/runner/.local/share/solana/install/active_release/bin" >> $GITHUB_PATH
           
-          # 2. Install Anchor CLI 0.29.0 DIRECTLY (Bypassing AVM)
+          # 2. Install Anchor CLI 0.29.0 DIRECTLY
           echo "Installing Anchor CLI 0.29.0..."
           cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
           
@@ -194,7 +197,7 @@ jobs:
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
           
           # 4. Verify
-          $HOME/.cargo/bin/anchor --version
+          anchor --version
       - name: Install pnpm
         run: corepack enable
       - name: Backend build
@@ -210,46 +213,30 @@ jobs:
       - name: Blockchain release build
         working-directory: blockchain
         run: |
-          # This will now use the successfully installed and path-activated Anchor CLI
-          anchor build --release
+          # FIX: Removed --release flag (not supported/needed by anchor build)
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
+          anchor build
       - name: Notify CI status webhook
         if: always()
         env:
           API_KEY: ${{ secrets.CI_WEBHOOK_API_KEY }}
           BACKEND_URL: ${{ secrets.BACKEND_URL }}
         run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            status="success"
-          else
-            status="failed"
-          fi
+          if [ "${{ job.status }}" == "success" ]; then status="success"; else status="failed"; fi
           BACKEND_URL_FINAL="${BACKEND_URL:-http://localhost:4000}"
           
-          echo "=== CI Webhook Debug Info ==="
-          echo "Job Status: ${{ job.status }}"
-          echo "CI Status: ${status}"
-          echo "Backend URL: ${BACKEND_URL_FINAL}"
-          echo "API Key Set: $([ -n "${API_KEY}" ] && echo "Yes" || echo "No")"
-          echo "Commit: ${{ github.sha }}"
-          echo "Run ID: ${{ github.run_id }}"
-          echo "Actor: ${{ github.actor }}"
-          echo "=============================="
-          
+          echo "Status: ${status}"
           if [ -z "${API_KEY}" ]; then
             echo "❌ ERROR: CI_WEBHOOK_API_KEY secret is not set!"
-            echo "Go to: Settings → Secrets and variables → Actions"
             exit 0
           fi
           
           if [ "${BACKEND_URL_FINAL}" == "http://localhost:4000" ]; then
-            echo "⚠️  WARNING: BACKEND_URL is not set or is localhost!"
-            echo "GitHub Actions cannot reach localhost. Set BACKEND_URL to your deployed backend URL."
-            echo "Example: https://your-backend.railway.app or https://your-backend.render.com"
+            echo "⚠️  WARNING: BACKEND_URL is localhost (unreachable)!"
             exit 0
           fi
           
-          echo "Sending webhook to ${BACKEND_URL_FINAL}/ci/status/webhook..."
-          response=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST "${BACKEND_URL_FINAL}/ci/status/webhook" \
+          curl -s -X POST "${BACKEND_URL_FINAL}/ci/status/webhook" \
             -H "Content-Type: application/json" \
             -H "x-api-key: ${API_KEY}" \
             -d "{
@@ -258,14 +245,4 @@ jobs:
               \"commit\": \"${{ github.sha }}\",
               \"runId\": \"run-${{ github.run_id }}\",
               \"triggeredBy\": \"${{ github.actor }}\"
-            }")
-          
-          http_code=$(echo "$response" | grep "HTTP_CODE" | cut -d: -f2)
-          body=$(echo "$response" | sed '/HTTP_CODE/d')
-          
-          if [ "${http_code}" == "202" ]; then
-            echo "✅ Webhook sent successfully! Response: ${body}"
-          else
-            echo "❌ Webhook failed! HTTP ${http_code}"
-            echo "Response: ${body}"
-          fi
+            }"
