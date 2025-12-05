@@ -153,11 +153,21 @@ jobs:
           cargo update -p rayon --precise 1.10.0
           cargo update -p rayon-core --precise 1.12.1
           
+          # FIX: Setup Wallet and Localnet
+          mkdir -p $HOME/.config/solana
+          solana-keygen new --no-bip39-passphrase -o $HOME/.config/solana/id.json
+          solana config set --keypair $HOME/.config/solana/id.json
+          solana config set --url localhost
+          
+          # Ensure we test on localnet, not devnet
+          if [ -f Anchor.toml ]; then
+            sed -i 's/cluster = "Devnet"/cluster = "Localnet"/g' Anchor.toml
+            echo "Switched Anchor.toml to localnet"
+          fi
+          
           echo "Running Anchor tests..."
           # Force refresh of PATH to include Solana
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
-          
-          # FIX: Removed -- --nocapture to avoid confusing the build command
           anchor test
       - name: Generate coverage report
         working-directory: blockchain
