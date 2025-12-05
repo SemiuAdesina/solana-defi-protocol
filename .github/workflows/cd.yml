@@ -1,0 +1,222 @@
+name: cd
+
+on:
+  workflow_run:
+    workflows: ["ci"]
+    types:
+      - completed
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual deployment trigger
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  deploy-blockchain:
+    name: Deploy Blockchain Program
+    runs-on: ubuntu-latest
+    # Only run if CI workflow succeeded
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    steps:
+      - uses: actions/checkout@v4
+      
+      # Use the specific stable toolchain that worked in CI
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          toolchain: 1.76.0
+      
+      - name: Install Solana & Anchor CLI
+        run: |
+          # 1. Install Solana (Deterministic Install - Matches CI)
+          SOLANA_VER="v1.17.15"
+          echo "Downloading Solana $SOLANA_VER..."
+          wget -q "https://github.com/solana-labs/solana/releases/download/$SOLANA_VER/solana-release-x86_64-unknown-linux-gnu.tar.bz2"
+          tar jxf solana-release-x86_64-unknown-linux-gnu.tar.bz2
+          
+          mkdir -p $HOME/.local/share/solana/install
+          rm -rf $HOME/.local/share/solana/install/active_release
+          mv solana-release $HOME/.local/share/solana/install/active_release
+          
+          SOLANA_PATH="$HOME/.local/share/solana/install/active_release/bin"
+          echo "$SOLANA_PATH" >> $GITHUB_PATH
+          export PATH="$SOLANA_PATH:$PATH"
+          
+          # 2. Install Anchor CLI 0.29.0 (Direct Cargo Install - Matches CI)
+          echo "Installing Anchor CLI 0.29.0..."
+          cargo install --git https://github.com/coral-xyz/anchor --tag v0.29.0 anchor-cli --locked --force
+          
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          export PATH="$HOME/.cargo/bin:$PATH"
+          
+          solana --version
+          anchor --version
+      
+      - name: Setup Wallets
+        run: |
+          mkdir -p $HOME/.config/solana
+          mkdir -p blockchain/target/deploy
+          
+          # 1. Setup Deployer Wallet (The one paying for gas)
+          # Expects BASE64 encoded keypair in secrets
+          if [ -z "${{ secrets.SOLANA_DEPLOYER_KEYPAIR }}" ]; then
+            echo "❌ Error: SOLANA_DEPLOYER_KEYPAIR secret is missing"
+            echo "See docs/CD_SETUP.md for setup instructions"
+            exit 1
+          fi
+          echo "${{ secrets.SOLANA_DEPLOYER_KEYPAIR }}" | base64 -d > $HOME/.config/solana/id.json
+          chmod 600 $HOME/.config/solana/id.json
+          
+          # 2. Setup Program Keypair (To ensure Program ID stays the same)
+          # Expects BASE64 encoded keypair in secrets
+          if [ -n "${{ secrets.SOLANA_PROGRAM_KEYPAIR }}" ]; then
+            echo "✅ Injecting persistent Program Keypair..."
+            echo "${{ secrets.SOLANA_PROGRAM_KEYPAIR }}" | base64 -d > blockchain/target/deploy/audit_registry-keypair.json
+            chmod 600 blockchain/target/deploy/audit_registry-keypair.json
+            echo "Program ID will remain: $(solana address -k blockchain/target/deploy/audit_registry-keypair.json 2>/dev/null || echo 'N/A')"
+          else
+            echo "⚠️  WARNING: SOLANA_PROGRAM_KEYPAIR secret not found. A new Program ID will be generated."
+            echo "⚠️  This will break your frontend and lose on-chain state!"
+            echo "⚠️  See docs/CD_SETUP.md for instructions to save your Program Keypair"
+          fi
+          
+          # Configure Solana
+          solana config set --url devnet
+          solana config set --keypair $HOME/.config/solana/id.json
+          
+          # Check Balance
+          BALANCE=$(solana balance --output json 2>/dev/null | jq -r '.balance' || echo "0")
+          echo "Deployer Wallet Balance: $BALANCE SOL"
+          
+          # 2 SOL limit check
+          MIN_BALANCE=2000000000 
+          if [ "$BALANCE" -lt "$MIN_BALANCE" ]; then
+            echo "❌ Error: Insufficient balance. Need > 2 SOL."
+            echo "Airdrop SOL from: https://faucet.solana.com/"
+            exit 1
+          fi
+      
+      - name: Build and Deploy
+        working-directory: blockchain
+        run: |
+          # 1. Fix Dependencies (Matches CI exactly)
+          rm -f Cargo.lock
+          cargo generate-lockfile
+          cargo update -p rayon --precise 1.10.0
+          cargo update -p rayon-core --precise 1.12.1
+          
+          # Ensure PATH includes Solana
+          export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
+          
+          # 2. Build
+          echo "Building program..."
+          anchor build
+          
+          # 3. Deploy
+          echo "Deploying to Devnet..."
+          # We use the keypair explicitly to ensure Anchor uses the correct authority
+          anchor deploy --provider.cluster devnet --provider.wallet $HOME/.config/solana/id.json
+          
+          # 4. Output Info
+          PROGRAM_ID=$(solana address -k target/deploy/audit_registry-keypair.json)
+          echo "🎉 Deployment Successful!"
+          echo "Program ID: $PROGRAM_ID"
+          echo "Explorer URL: https://explorer.solana.com/address/$PROGRAM_ID?cluster=devnet"
+          echo "::notice title=Blockchain Deployed::Program ID: $PROGRAM_ID"
+
+  deploy-backend:
+    name: Deploy Backend
+    runs-on: ubuntu-latest
+    needs: [deploy-blockchain]
+    if: ${{ success() }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pnpm
+        run: corepack enable
+      
+      # Placeholder for actual deployment logic (Railway/Render/etc)
+      - name: Build Docker
+        working-directory: backend
+        run: |
+          echo "Building backend Docker image..."
+          docker build -t backend:latest .
+          docker images backend:latest
+          echo "📦 Backend Docker image built successfully"
+          echo "🔧 Configure deployment platform secrets to enable auto-deployment"
+          echo "📖 See docs/CD_SETUP.md for setup instructions"
+
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: [deploy-backend]
+    if: ${{ success() }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install pnpm
+        run: corepack enable
+      
+      # Placeholder for Vercel/Netlify
+      - name: Build Frontend
+        working-directory: frontend
+        run: |
+          echo "Building frontend..."
+          pnpm install
+          pnpm build
+          echo "📦 Frontend build completed"
+          echo "🔧 Configure deployment platform secrets to enable auto-deployment"
+          echo "📖 See docs/CD_SETUP.md for setup instructions"
+
+  notify:
+    name: Notify Status
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [deploy-blockchain, deploy-backend, deploy-frontend]
+    steps:
+      - name: Webhook Notification
+        env:
+          API_KEY: ${{ secrets.CI_WEBHOOK_API_KEY }}
+          BACKEND_URL: ${{ secrets.BACKEND_URL }}
+        run: |
+          # Determine overall deployment status
+          if [ "${{ needs.deploy-blockchain.result }}" == "success" ] && \
+             [ "${{ needs.deploy-backend.result }}" == "success" ] && \
+             [ "${{ needs.deploy-frontend.result }}" == "success" ]; then
+            status="success"
+            message="🚀 All deployments completed successfully!"
+          else
+            status="failed"
+            message="❌ Deployment failed. Check workflow logs for details."
+          fi
+          
+          BACKEND_URL_FINAL="${BACKEND_URL:-http://localhost:4000}"
+          
+          echo "Deployment Status: ${status}"
+          echo "$message"
+          
+          if [ -z "${API_KEY}" ]; then
+            echo "⚠️  CI_WEBHOOK_API_KEY not set, skipping notification"
+            exit 0
+          fi
+          
+          if [ "${BACKEND_URL_FINAL}" == "http://localhost:4000" ]; then
+            echo "⚠️  BACKEND_URL is localhost, skipping notification"
+            exit 0
+          fi
+          
+          curl -s -X POST "${BACKEND_URL_FINAL}/ci/status/webhook" \
+            -H "Content-Type: application/json" \
+            -H "x-api-key: ${API_KEY}" \
+            -d "{
+              \"pipeline\": \"deployment\",
+              \"status\": \"${status}\",
+              \"commit\": \"${{ github.sha }}\",
+              \"runId\": \"run-${{ github.run_id }}\",
+              \"triggeredBy\": \"${{ github.actor }}\",
+              \"message\": \"${message}\"
+            }" || echo "⚠️  Failed to send notification"
