@@ -38,7 +38,8 @@ jobs:
           cargo update -p rayon --precise 1.10.0
           cargo update -p rayon-core --precise 1.12.1
           
-          cargo install cargo-audit --locked || true
+          # FIX: Pin cargo-audit to 0.20.1 for Rust 1.76.0 compatibility
+          cargo install cargo-audit --version 0.20.1 --locked || true
           cargo audit || echo "Warning: cargo audit found issues (non-blocking)"
       - name: npm audit backend
         working-directory: backend
@@ -173,8 +174,11 @@ jobs:
         working-directory: blockchain
         run: |
           # Re-export path for cargo-llvm-cov
-          export PATH="$HOME/.local/share/solana/install/active_release/bin:$PATH"
-          cargo install cargo-llvm-cov --locked
+          export PATH="$HOME/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
+          
+          # FIX: Pin cargo-llvm-cov to 0.6.15 for Rust 1.76.0 compatibility
+          cargo install cargo-llvm-cov --version 0.6.15 --locked
+          
           cargo llvm-cov --locked --all-features --workspace --lcov --output-path lcov.info
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
