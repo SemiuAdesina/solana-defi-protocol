@@ -146,27 +146,33 @@ jobs:
           # FIX: Reset lockfile
           rm -f Cargo.lock
           
-          # FIX: Generate fresh lockfile
+          # FIX: Generate fresh lockfile & patch deps
           cargo generate-lockfile
-          
-          # FIX: Downgrade rayon to 1.10.0 (compatible with Rust 1.76)
-          # This implicitly pulls rayon-core 1.12.1
           cargo update -p rayon --precise 1.10.0
           cargo update -p rayon-core --precise 1.12.1
           
-          # FIX: Setup Wallet and Localnet
+          # FIX: Setup Wallet
           mkdir -p $HOME/.config/solana
           solana-keygen new --no-bip39-passphrase -o $HOME/.config/solana/id.json
-          solana config set --keypair $HOME/.config/solana/id.json
-          solana config set --url localhost
           
+          # FIX: Force Localnet in Anchor.toml
+          # This regex handles 'cluster="devnet"' or 'cluster = "devnet"' with any spacing
           if [ -f Anchor.toml ]; then
-            sed -i 's/cluster = "devnet"/cluster = "localnet"/g' Anchor.toml
+            echo "Original Anchor.toml cluster setting:"
+            grep "cluster" Anchor.toml || echo "Cluster setting not found"
+            
+            sed -i 's/cluster *= *"[^"]*"/cluster = "localnet"/' Anchor.toml
+            
+            echo "Updated Anchor.toml cluster setting:"
+            grep "cluster" Anchor.toml
+          else
+            echo "WARNING: Anchor.toml not found!"
           fi
           
           echo "Running Anchor tests..."
-          # Force refresh of PATH to include Solana
           export PATH="/home/runner/.local/share/solana/install/active_release/bin:$HOME/.cargo/bin:$PATH"
+          
+          # Run tests (Anchor will spin up a local validator and fund the wallet automatically)
           anchor test
       - name: Generate coverage report
         working-directory: blockchain
@@ -192,29 +198,21 @@ jobs:
           export CARGO_TERM_COLOR=never
           
           echo "Generating summary..."
-          # Capture output
           coverage_output=$(cargo llvm-cov --locked --all-features --workspace --summary-only 2>&1)
           
-          # Print for debugging in CI logs
-          echo "--- Raw Coverage Output ---"
+          # Print for debugging
           echo "$coverage_output"
-          echo "---------------------------"
           
-          # Robust Parsing:
-          # 1. Grep for the line containing "Total" (case insensitive)
-          # 2. Use awk to grab the LAST column ($NF), which is line coverage %
-          # 3. Use tr to remove the '%' sign
+          # Robust Parsing using grep and awk
           coverage=$(echo "$coverage_output" | grep -i "Total" | awk '{print $NF}' | tr -d '%')
           
           echo "Parsed Coverage: ${coverage}%"
           
-          # Sanity check: is coverage empty?
           if [ -z "$coverage" ]; then
             echo "❌ ERROR: Could not parse coverage percentage from output."
             exit 1
           fi
           
-          # Float to Int comparison using awk
           is_passing=$(echo "$coverage" | awk '{if ($1 >= 80) print 1; else print 0}')
           
           if [ "$is_passing" -eq 1 ]; then
