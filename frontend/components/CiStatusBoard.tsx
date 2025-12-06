@@ -78,7 +78,7 @@ export const CiStatusBoard = ({ statuses, loading, error }: CiStatusBoardProps) 
             Error loading CI statuses: {error.message}
           </li>
         )}
-        {!error && !statuses.length && (
+        {!loading && !error && !statuses.length && (
           <li style={{ fontSize: '14px', color: '#94a3b8', textAlign: 'center', padding: '24px', borderRadius: '12px', backgroundColor: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
             No CI runs recorded yet.
           </li>

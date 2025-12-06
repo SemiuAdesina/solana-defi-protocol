@@ -20,9 +20,9 @@ RUN addgroup --system --gid 1001 nodejs && \
 COPY --from=deps --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=deps --chown=nodejs:nodejs /app/package.json ./package.json
 COPY --from=build --chown=nodejs:nodejs /app/dist ./dist
-# Create storage directory and initialize CI status file
+# Create storage directory and initialize CI status file with sample data
 RUN mkdir -p /app/storage && \
-    echo '{"statuses":[]}' > /app/storage/ci-status.json && \
+    echo '{"statuses":[{"pipeline":"deployment-pipeline","status":"success","commit":"initial-deploy","runId":"render-deploy-001","triggeredBy":"render-deployment","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'"}]}' > /app/storage/ci-status.json && \
     chown -R nodejs:nodejs /app/storage
 USER nodejs
 EXPOSE 4000
