@@ -3,7 +3,8 @@
   "compilerOptions": {
     "noEmit": false,
     "sourceMap": false,
-    "inlineSources": false
+    "inlineSources": false,
+    "types": ["node"]
   },
   "exclude": [
     "**/*.test.ts",

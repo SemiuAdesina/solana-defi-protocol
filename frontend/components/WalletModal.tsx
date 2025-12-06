@@ -16,14 +16,14 @@ export const WalletModal = () => {
     setMounted(true);
   }, []);
 
-  if (!mounted || !visible) {
-    return null;
-  }
-
   const handleWalletSelect = useCallback((walletName: WalletName) => {
     select?.(walletName);
     setVisible(false);
   }, [select, setVisible]);
+
+  if (!mounted || !visible) {
+    return null;
+  }
 
   return (
     <div

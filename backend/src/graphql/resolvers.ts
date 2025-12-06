@@ -40,7 +40,14 @@ export const createResolvers = (): Resolvers => ({
           `Example: "EaDViQQPiBUqBCUXXkEsihCVHRcTuMctmnfEn9Mv9sqA"`
         );
       }
-      return ctx.registryService.getRegistryByAuthority(args.authority);
+      try {
+        return await ctx.registryService.getRegistryByAuthority(args.authority);
+      } catch (error) {
+        console.error("Error in registry resolver:", error);
+        throw new Error(
+          `Failed to fetch registry: ${error instanceof Error ? error.message : String(error)}`
+        );
+      }
     },
     ciStatuses: async (_parent, args, ctx) => {
       return ctx.ciStatusService.getRecent(args.limit);

@@ -13,7 +13,14 @@ const bootstrap = async (): Promise<void> => {
 
   const apollo = new ApolloServer({
     typeDefs,
-    resolvers: createResolvers()
+    resolvers: createResolvers(),
+    formatError: (err) => {
+      console.error("GraphQL Error:", err);
+      return {
+        message: err.message,
+        extensions: err.extensions
+      };
+    }
   });
   await apollo.start();
   app.use(

@@ -1,0 +1,17 @@
+node_modules
+.next
+coverage
+.env.local
+.env*.local
+*.log
+*.tsbuildinfo
+.DS_Store
+.git
+.gitignore
+README.md
+tests
+*.test.ts
+*.spec.ts
+vitest.config.ts
+vitest.setup.ts
+

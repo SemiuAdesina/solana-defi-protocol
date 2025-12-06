@@ -34,6 +34,15 @@ export const buildServer = (deps: Dependencies): Express => {
   }));
   app.use(express.json({ limit: "64kb" }));
 
+  // Root endpoint for Render health checks (free tier)
+  app.get("/", (_req, res) => {
+    res.json({
+      status: "ok",
+      service: "solana-backend",
+      timestamp: new Date().toISOString()
+    });
+  });
+
   app.use("/health", healthRouter);
   app.use("/registry", createRegistryRouter(deps.registryService));
   app.use("/metadata", createMetadataRouter(deps.registryService));

@@ -1,6 +1,4 @@
 /** @type {import('next').NextConfig} */
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
-
 const config = {
   experimental: {
     instrumentationHook: true
@@ -25,6 +23,8 @@ const config = {
     return config;
   },
   async rewrites() {
+    // Use runtime environment variable for backend URL
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
     return [
       {
         source: "/ci/:path*",

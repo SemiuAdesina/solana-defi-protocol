@@ -1,8 +1,7 @@
-version: "3.9"
-
 services:
   validator:
     image: solanalabs/solana:v1.18.18
+    platform: linux/amd64
     command: >
       solana-test-validator
       --reset
@@ -21,19 +20,18 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     environment:
-      - SOLANA_RPC_URL=http://validator:8899
-    depends_on:
-      - validator
+      - SOLANA_RPC_URL=${SOLANA_RPC_URL:-https://api.devnet.solana.com}
+      - API_KEY=${API_KEY:-test-key-minimum-16-characters}
     ports:
       - "4000:4000"
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: frontend/Dockerfile
     environment:
-      - NEXT_PUBLIC_SOLANA_RPC=http://localhost:8899
-      - BACKEND_URL=http://backend:4000
+      - NEXT_PUBLIC_SOLANA_RPC=${NEXT_PUBLIC_SOLANA_RPC:-https://api.devnet.solana.com}
+      - NEXT_PUBLIC_BACKEND_URL=http://backend:4000
     depends_on:
       - backend
     ports:

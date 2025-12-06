@@ -1,4 +1,13 @@
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
+// Use relative paths so Next.js rewrites can handle the routing
+// This allows the same code to work in both Docker and local development
+const getBackendUrl = (): string => {
+  // In browser, use relative paths (Next.js rewrites will handle it)
+  if (typeof window !== "undefined") {
+    return "";
+  }
+  // On server-side, use the environment variable or default
+  return process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:4000";
+};
 
 export type RegistryMetadata = {
   authority: string;
@@ -17,6 +26,7 @@ export type CiStatus = {
 };
 
 export const fetchMetadata = async (authority: string): Promise<RegistryMetadata | null> => {
+  const backendUrl = getBackendUrl();
   const res = await fetch(`${backendUrl}/metadata/${authority}`);
   if (!res.ok) {
     return null;
@@ -26,6 +36,7 @@ export const fetchMetadata = async (authority: string): Promise<RegistryMetadata
 };
 
 export const fetchCiStatuses = async (): Promise<CiStatus[]> => {
+  const backendUrl = getBackendUrl();
   const res = await fetch(`${backendUrl}/ci/status`);
   if (!res.ok) {
     return [];

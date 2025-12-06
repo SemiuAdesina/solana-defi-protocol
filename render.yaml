@@ -1,0 +1,44 @@
+services:
+  # Backend Service
+  - type: web
+    name: solana-backend
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 4000
+      - key: SOLANA_RPC_URL
+        value: https://api.devnet.solana.com
+      - key: API_KEY
+        generateValue: true
+        sync: false
+    healthCheckPath: /health
+    autoDeploy: true
+
+  # Frontend Service
+  # Note: After backend deploys, update NEXT_PUBLIC_BACKEND_URL with your backend URL
+  # Format: https://solana-backend.onrender.com
+  - type: web
+    name: solana-frontend
+    env: docker
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: .
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: NEXT_PUBLIC_SOLANA_RPC
+        value: https://api.devnet.solana.com
+      - key: NEXT_PUBLIC_BACKEND_URL
+        value: https://solana-backend.onrender.com
+        # ⚠️ IMPORTANT: Replace 'solana-backend' with your actual backend service name
+        # Or update this in Render dashboard after backend deploys
+    healthCheckPath: /
+    autoDeploy: true
+
