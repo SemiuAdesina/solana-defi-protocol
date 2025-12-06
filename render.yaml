@@ -36,9 +36,8 @@ services:
       - key: NEXT_PUBLIC_SOLANA_RPC
         value: https://api.devnet.solana.com
       - key: NEXT_PUBLIC_BACKEND_URL
-        value: https://solana-backend.onrender.com
-        # ⚠️ IMPORTANT: Replace 'solana-backend' with your actual backend service name
-        # Or update this in Render dashboard after backend deploys
+        value: https://solana-backend-z86e.onrender.com
+        # ⚠️ IMPORTANT: This is the actual deployed backend URL
     healthCheckPath: /
     autoDeploy: true
 
