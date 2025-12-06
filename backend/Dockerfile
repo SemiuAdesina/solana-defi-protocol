@@ -22,7 +22,7 @@ COPY --from=deps --chown=nodejs:nodejs /app/package.json ./package.json
 COPY --from=build --chown=nodejs:nodejs /app/dist ./dist
 # Create storage directory and initialize CI status file with sample data
 RUN mkdir -p /app/storage && \
-    echo '{"statuses":[{"pipeline":"deployment-pipeline","status":"success","commit":"initial-deploy","runId":"render-deploy-001","triggeredBy":"render-deployment","timestamp":"'$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)'"}]}' > /app/storage/ci-status.json && \
+    echo '{"statuses":[{"pipeline":"deployment-pipeline","status":"success","commit":"initial-deploy","runId":"render-deploy-001","triggeredBy":"render-deployment","timestamp":"2025-12-06T12:00:00.000Z"}]}' > /app/storage/ci-status.json && \
     chown -R nodejs:nodejs /app/storage
 USER nodejs
 EXPOSE 4000
